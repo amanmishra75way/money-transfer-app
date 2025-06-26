@@ -2,13 +2,52 @@ import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { login, logout } from "../redux/userSlice";
 import { useNavigate } from "react-router-dom";
+import {
+  Box,
+  Card,
+  CardContent,
+  TextField,
+  Button,
+  Typography,
+  Alert,
+  CircularProgress,
+  Container,
+  Avatar,
+  Chip,
+  Divider,
+  Stack,
+  IconButton,
+  useTheme,
+  useMediaQuery,
+  Paper,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemAvatar,
+  Fade,
+  Grow,
+} from "@mui/material";
+import {
+  Lock as LockIcon,
+  AccountCircle as AccountCircleIcon,
+  Dashboard as DashboardIcon,
+  Logout as LogoutIcon,
+  Person as PersonIcon,
+  AdminPanelSettings as AdminIcon,
+  Visibility,
+  VisibilityOff,
+  Login as LoginIcon,
+} from "@mui/icons-material";
 
 const Login = () => {
   const [credentials, setCredentials] = useState({ id: "", password: "" });
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   const dispatch = useDispatch();
   const { error, currentUser } = useSelector((state) => state.user);
   const navigate = useNavigate();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   useEffect(() => {
     if (currentUser) {
@@ -34,145 +73,315 @@ const Login = () => {
   };
 
   const quickLogin = (id, password) => {
+    setCredentials({ id, password });
     dispatch(login({ id, password }));
   };
 
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+
+  // Trial users data
+  const trialUsers = [
+    { name: "Alice", id: "u1", password: "alice123", role: "User", color: "primary" },
+    { name: "Bob", id: "u2", password: "bob123", role: "User", color: "primary" },
+    { name: "Administrator", id: "admin", password: "admin123", role: "Admin", color: "success" },
+  ];
+
   if (currentUser) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 flex items-center justify-center p-4">
-        <div className="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md text-center">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path>
-            </svg>
-          </div>
-          <h2 className="text-2xl font-bold text-gray-800 mb-2">Welcome, {currentUser.name}!</h2>
-          <p className="text-gray-600 mb-6">You are logged in as {currentUser.isAdmin ? "Administrator" : "User"}</p>
-          <div className="space-y-3">
-            <button
-              onClick={() => navigate(currentUser.isAdmin ? "/admin" : "/dashboard")}
-              className="w-full py-3 px-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium rounded-lg hover:from-blue-700 hover:to-indigo-700 transition duration-200"
-            >
-              Go to Dashboard
-            </button>
-            <button
-              onClick={() => dispatch(logout())}
-              className="w-full py-3 px-4 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition duration-200"
-            >
-              Logout
-            </button>
-          </div>
-        </div>
-      </div>
+      <Container maxWidth="sm" sx={{ minHeight: "100vh", display: "flex", alignItems: "center", py: 3 }}>
+        <Grow in timeout={800}>
+          <Card
+            elevation={8}
+            sx={{
+              width: "100%",
+              borderRadius: 3,
+              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+              color: "white",
+            }}
+          >
+            <CardContent sx={{ p: 4, textAlign: "center" }}>
+              <Avatar
+                sx={{
+                  width: 80,
+                  height: 80,
+                  mx: "auto",
+                  mb: 3,
+                  bgcolor: "rgba(255,255,255,0.2)",
+                  backdropFilter: "blur(10px)",
+                }}
+              >
+                {currentUser.isAdmin ? <AdminIcon sx={{ fontSize: 40 }} /> : <PersonIcon sx={{ fontSize: 40 }} />}
+              </Avatar>
+
+              <Typography variant="h4" gutterBottom fontWeight="bold">
+                Welcome, {currentUser.name}!
+              </Typography>
+
+              <Chip
+                label={currentUser.isAdmin ? "Administrator" : "User"}
+                color={currentUser.isAdmin ? "warning" : "info"}
+                sx={{ mb: 4, fontWeight: "bold" }}
+              />
+
+              <Stack spacing={2}>
+                <Button
+                  variant="contained"
+                  size="large"
+                  startIcon={<DashboardIcon />}
+                  onClick={() => navigate(currentUser.isAdmin ? "/admin" : "/dashboard")}
+                  sx={{
+                    bgcolor: "rgba(255,255,255,0.2)",
+                    backdropFilter: "blur(10px)",
+                    "&:hover": {
+                      bgcolor: "rgba(255,255,255,0.3)",
+                    },
+                    borderRadius: 2,
+                    py: 1.5,
+                  }}
+                >
+                  Go to Dashboard
+                </Button>
+
+                <Button
+                  variant="outlined"
+                  size="large"
+                  startIcon={<LogoutIcon />}
+                  onClick={() => dispatch(logout())}
+                  sx={{
+                    borderColor: "rgba(255,255,255,0.5)",
+                    color: "white",
+                    "&:hover": {
+                      borderColor: "rgba(255,255,255,0.8)",
+                      bgcolor: "rgba(255,255,255,0.1)",
+                    },
+                    borderRadius: 2,
+                    py: 1.5,
+                  }}
+                >
+                  Logout
+                </Button>
+              </Stack>
+            </CardContent>
+          </Card>
+        </Grow>
+      </Container>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <div className="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md border border-gray-200">
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
-              ></path>
-            </svg>
-          </div>
-          <h2 className="text-3xl font-bold text-gray-800 mb-2">MoneyTransfer</h2>
-          <p className="text-gray-600">Secure Money Transfer Platform</p>
-        </div>
-
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg mb-4 flex items-center">
-            <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-              <path
-                fillRule="evenodd"
-                d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
-                clipRule="evenodd"
-              ></path>
-            </svg>
-            {error}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">User ID</label>
-            <input
-              type="text"
-              name="id"
-              value={credentials.id}
-              onChange={handleChange}
-              placeholder="Enter your user ID"
-              required
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
-            <input
-              type="password"
-              name="password"
-              value={credentials.password}
-              onChange={handleChange}
-              placeholder="Enter your password"
-              required
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
-            />
-          </div>
-
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="w-full py-3 px-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-medium rounded-lg hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-200 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
+    <Box
+      sx={{
+        minHeight: "100vh",
+        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+        display: "flex",
+        alignItems: "center",
+        py: 3,
+      }}
+    >
+      <Container maxWidth="md">
+        <Fade in timeout={1000}>
+          <Card
+            elevation={12}
+            sx={{
+              borderRadius: 4,
+              overflow: "hidden",
+              backdropFilter: "blur(10px)",
+              backgroundColor: "rgba(255, 255, 255, 0.95)",
+            }}
           >
-            {isLoading ? (
-              <div className="flex items-center justify-center">
-                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                  ></path>
-                </svg>
-                Signing In...
-              </div>
-            ) : (
-              "Sign In"
-            )}
-          </button>
-        </form>
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: { xs: "column", md: "row" },
+                minHeight: { md: "600px" },
+              }}
+            >
+              {/* Left Panel - Login Form */}
+              <Box sx={{ flex: 1, p: { xs: 3, sm: 4, md: 5 } }}>
+                <Box sx={{ textAlign: "center", mb: 4 }}>
+                  <Avatar
+                    sx={{
+                      width: 64,
+                      height: 64,
+                      mx: "auto",
+                      mb: 2,
+                      bgcolor: "primary.main",
+                    }}
+                  >
+                    <LockIcon sx={{ fontSize: 32 }} />
+                  </Avatar>
 
-        <div className="mt-8 p-4 bg-gray-50 rounded-lg">
-          <h3 className="font-medium text-gray-800 mb-3">Trial User Credentials:</h3>
-          <ul className="space-y-2">
-            <li className="px-3 py-2 bg-white rounded border">
-              <div className="font-medium text-blue-600">Alice (User)</div>
-              <div className="text-sm text-gray-500">
-                ID: <span className="font-mono">u1</span> | Password: <span className="font-mono">alice123</span>
-              </div>
-            </li>
-            <li className="px-3 py-2 bg-white rounded border">
-              <div className="font-medium text-blue-600">Bob (User)</div>
-              <div className="text-sm text-gray-500">
-                ID: <span className="font-mono">u2</span> | Password: <span className="font-mono">bob123</span>
-              </div>
-            </li>
-            <li className="px-3 py-2 bg-white rounded border">
-              <div className="font-medium text-green-600">Administrator</div>
-              <div className="text-sm text-gray-500">
-                ID: <span className="font-mono">admin</span> | Password: <span className="font-mono">admin123</span>
-              </div>
-            </li>
-          </ul>
-        </div>
-      </div>
-    </div>
+                  <Typography variant="h4" fontWeight="bold" gutterBottom>
+                    MoneyTransfer
+                  </Typography>
+
+                  <Typography variant="body1" color="text.secondary">
+                    Secure Money Transfer Platform
+                  </Typography>
+                </Box>
+
+                {error && (
+                  <Fade in>
+                    <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }} icon={<LockIcon />}>
+                      {error}
+                    </Alert>
+                  </Fade>
+                )}
+
+                <Box component="form" onSubmit={handleSubmit}>
+                  <Stack spacing={3}>
+                    <TextField
+                      fullWidth
+                      label="User ID"
+                      name="id"
+                      value={credentials.id}
+                      onChange={handleChange}
+                      required
+                      variant="outlined"
+                      InputProps={{
+                        startAdornment: <AccountCircleIcon sx={{ color: "action.active", mr: 1 }} />,
+                      }}
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          borderRadius: 2,
+                        },
+                      }}
+                    />
+
+                    <TextField
+                      fullWidth
+                      label="Password"
+                      name="password"
+                      type={showPassword ? "text" : "password"}
+                      value={credentials.password}
+                      onChange={handleChange}
+                      required
+                      variant="outlined"
+                      InputProps={{
+                        startAdornment: <LockIcon sx={{ color: "action.active", mr: 1 }} />,
+                        endAdornment: (
+                          <IconButton onClick={togglePasswordVisibility} edge="end" size="small">
+                            {showPassword ? <VisibilityOff /> : <Visibility />}
+                          </IconButton>
+                        ),
+                      }}
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          borderRadius: 2,
+                        },
+                      }}
+                    />
+
+                    <Button
+                      type="submit"
+                      fullWidth
+                      variant="contained"
+                      size="large"
+                      disabled={isLoading}
+                      startIcon={isLoading ? <CircularProgress size={20} color="inherit" /> : <LoginIcon />}
+                      sx={{
+                        py: 1.5,
+                        borderRadius: 2,
+                        background: "linear-gradient(45deg, #667eea 30%, #764ba2 90%)",
+                        boxShadow: "0 3px 5px 2px rgba(102, 126, 234, .3)",
+                        "&:hover": {
+                          background: "linear-gradient(45deg, #5a67d8 30%, #6b46c1 90%)",
+                        },
+                      }}
+                    >
+                      {isLoading ? "Signing In..." : "Sign In"}
+                    </Button>
+                  </Stack>
+                </Box>
+              </Box>
+
+              {/* Right Panel - Trial Credentials */}
+              <Box
+                sx={{
+                  flex: { md: 0.8 },
+                  bgcolor: "grey.50",
+                  p: { xs: 3, sm: 4, md: 5 },
+                  borderLeft: { md: "1px solid" },
+                  borderTop: { xs: "1px solid", md: "none" },
+                  borderColor: "divider",
+                }}
+              >
+                <Typography variant="h6" fontWeight="bold" gutterBottom>
+                  Trial User Credentials
+                </Typography>
+
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                  Click on any credential to quick login
+                </Typography>
+
+                <Stack spacing={2}>
+                  {trialUsers.map((user, index) => (
+                    <Paper
+                      key={index}
+                      elevation={2}
+                      sx={{
+                        p: 2,
+                        borderRadius: 2,
+                        cursor: "pointer",
+                        transition: "all 0.2s ease-in-out",
+                        "&:hover": {
+                          elevation: 4,
+                          transform: "translateY(-2px)",
+                          bgcolor: "primary.50",
+                        },
+                      }}
+                      onClick={() => quickLogin(user.id, user.password)}
+                    >
+                      <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+                        <Avatar
+                          sx={{
+                            width: 32,
+                            height: 32,
+                            mr: 2,
+                            bgcolor: user.role === "Admin" ? "success.main" : "primary.main",
+                          }}
+                        >
+                          {user.role === "Admin" ? <AdminIcon /> : <PersonIcon />}
+                        </Avatar>
+
+                        <Box sx={{ flex: 1 }}>
+                          <Typography variant="subtitle1" fontWeight="bold">
+                            {user.name}
+                          </Typography>
+                          <Chip
+                            label={user.role}
+                            size="small"
+                            color={user.role === "Admin" ? "success" : "primary"}
+                            sx={{ mt: 0.5 }}
+                          />
+                        </Box>
+                      </Box>
+
+                      <Box sx={{ pl: 6 }}>
+                        <Typography variant="body2" color="text.secondary">
+                          ID:{" "}
+                          <Box component="span" sx={{ fontFamily: "monospace", fontWeight: "bold" }}>
+                            {user.id}
+                          </Box>
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          Password:{" "}
+                          <Box component="span" sx={{ fontFamily: "monospace", fontWeight: "bold" }}>
+                            {user.password}
+                          </Box>
+                        </Typography>
+                      </Box>
+                    </Paper>
+                  ))}
+                </Stack>
+              </Box>
+            </Box>
+          </Card>
+        </Fade>
+      </Container>
+    </Box>
   );
 };
 

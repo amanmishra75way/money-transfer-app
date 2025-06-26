@@ -3,10 +3,61 @@ import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../redux/userSlice";
 import { requestTransaction } from "../redux/txnSlice";
 import { useNavigate } from "react-router-dom";
+import {
+  Box,
+  Typography,
+  Avatar,
+  Button,
+  Card,
+  CardContent,
+  Divider,
+  TextField,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Checkbox,
+  FormControlLabel,
+  Paper,
+  List,
+  ListItem,
+  ListItemAvatar,
+  ListItemText,
+  ListItemSecondaryAction,
+  Chip,
+  Tab,
+  Tabs,
+  useTheme,
+  useMediaQuery,
+  Container,
+  Stack,
+  Grid,
+  Fade,
+  Grow,
+  CircularProgress,
+  Alert,
+} from "@mui/material";
+import {
+  AccountBalance as BalanceIcon,
+  SwapHoriz as TransferIcon,
+  Add as DepositIcon,
+  Remove as WithdrawIcon,
+  History as HistoryIcon,
+  Logout as LogoutIcon,
+  ArrowDownward as DepositArrowIcon,
+  ArrowUpward as WithdrawArrowIcon,
+  CompareArrows as TransferArrowIcon,
+  CheckCircle as ApprovedIcon,
+  Pending as PendingIcon,
+  Public as InternationalIcon,
+  LocalAtm as LocalIcon,
+} from "@mui/icons-material";
 
 const UserDashboard = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const { currentUser, users } = useSelector((state) => state.user);
   const { transactions } = useSelector((state) => state.txn);
 
@@ -137,367 +188,574 @@ const UserDashboard = () => {
       new Date(txn.timestamp).getFullYear() === new Date().getFullYear()
   );
 
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case "overview":
+        return (
+          <Box sx={{ mt: 3 }}>
+            {/* Balance Card */}
+            <Card
+              sx={{
+                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                color: "white",
+                borderRadius: 3,
+                mb: 3,
+              }}
+            >
+              <CardContent>
+                <Typography variant="h6" gutterBottom>
+                  Current Balance
+                </Typography>
+                <Typography variant="h3" fontWeight="bold" gutterBottom>
+                  {formatCurrency(currentUserData?.balance || 0)}
+                </Typography>
+                <Typography variant="body2">Available for transfer</Typography>
+              </CardContent>
+            </Card>
+
+            {/* Stats Grid */}
+            <Grid container spacing={3} sx={{ mb: 3 }}>
+              <Grid item xs={12} sm={4}>
+                <Card>
+                  <CardContent>
+                    <Typography variant="h6" color="text.secondary" gutterBottom>
+                      Total Transactions
+                    </Typography>
+                    <Typography variant="h4" color="primary" fontWeight="bold">
+                      {userTransactions.length}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <Card>
+                  <CardContent>
+                    <Typography variant="h6" color="text.secondary" gutterBottom>
+                      Pending Approval
+                    </Typography>
+                    <Typography variant="h4" color="warning.main" fontWeight="bold">
+                      {pendingTransactions.length}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+              <Grid item xs={12} sm={4}>
+                <Card>
+                  <CardContent>
+                    <Typography variant="h6" color="text.secondary" gutterBottom>
+                      This Month
+                    </Typography>
+                    <Typography variant="h4" color="success.main" fontWeight="bold">
+                      {thisMonthTransactions.length}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+            </Grid>
+
+            {/* Recent Transactions */}
+            <Card>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>
+                  Recent Transactions
+                </Typography>
+                <Divider sx={{ mb: 2 }} />
+                {userTransactions.length > 0 ? (
+                  <List>
+                    {userTransactions.slice(0, 5).map((txn) => (
+                      <Fade in key={txn.id}>
+                        <ListItem sx={{ py: 2 }}>
+                          <ListItemAvatar>
+                            <Avatar
+                              sx={{
+                                bgcolor:
+                                  txn.type === "deposit"
+                                    ? "success.main"
+                                    : txn.type === "withdraw"
+                                    ? "error.main"
+                                    : "primary.main",
+                              }}
+                            >
+                              {txn.type === "deposit" ? (
+                                <DepositArrowIcon />
+                              ) : txn.type === "withdraw" ? (
+                                <WithdrawArrowIcon />
+                              ) : (
+                                <TransferArrowIcon />
+                              )}
+                            </Avatar>
+                          </ListItemAvatar>
+                          <ListItemText
+                            primary={
+                              txn.type === "deposit"
+                                ? "Deposit"
+                                : txn.type === "withdraw"
+                                ? "Withdrawal"
+                                : txn.fromId === currentUserData.id
+                                ? `To ${getRecipientName(txn.toId)}`
+                                : `From ${getRecipientName(txn.fromId)}`
+                            }
+                            secondary={formatDate(txn.timestamp)}
+                          />
+                          <ListItemSecondaryAction>
+                            <Stack direction="row" alignItems="center" spacing={1}>
+                              <Typography
+                                variant="body1"
+                                color={
+                                  txn.fromId === currentUserData.id && txn.type !== "deposit"
+                                    ? "error.main"
+                                    : "success.main"
+                                }
+                              >
+                                {txn.fromId === currentUserData.id && txn.type !== "deposit" ? "-" : "+"}
+                                {formatCurrency(txn.amount)}
+                              </Typography>
+                              <Chip
+                                size="small"
+                                label={txn.status}
+                                color={txn.status === "pending" ? "warning" : "success"}
+                                icon={txn.status === "pending" ? <PendingIcon /> : <ApprovedIcon />}
+                              />
+                            </Stack>
+                          </ListItemSecondaryAction>
+                        </ListItem>
+                      </Fade>
+                    ))}
+                  </List>
+                ) : (
+                  <Box sx={{ textAlign: "center", py: 4 }}>
+                    <Typography variant="body1" color="text.secondary">
+                      No transactions yet
+                    </Typography>
+                  </Box>
+                )}
+              </CardContent>
+            </Card>
+          </Box>
+        );
+
+      case "transfer":
+        return (
+          <Box sx={{ mt: 3, maxWidth: 600, mx: "auto" }}>
+            <Card>
+              <CardContent>
+                <Typography variant="h5" gutterBottom>
+                  Send Money
+                </Typography>
+                <form onSubmit={handleTransfer}>
+                  <Stack spacing={3}>
+                    <FormControl fullWidth>
+                      <InputLabel id="recipient-label">Recipient</InputLabel>
+                      <Select
+                        labelId="recipient-label"
+                        value={transferForm.recipientId}
+                        onChange={(e) => setTransferForm({ ...transferForm, recipientId: e.target.value })}
+                        label="Recipient"
+                        required
+                      >
+                        <MenuItem value="">Select recipient</MenuItem>
+                        {users
+                          .filter((u) => u.id !== currentUserData?.id && !u.isAdmin)
+                          .map((user) => (
+                            <MenuItem key={user.id} value={user.id}>
+                              {user.name} ({user.id})
+                            </MenuItem>
+                          ))}
+                      </Select>
+                    </FormControl>
+
+                    <TextField
+                      fullWidth
+                      label="Amount"
+                      type="number"
+                      inputProps={{ step: "0.01", min: "0.01" }}
+                      value={transferForm.amount}
+                      onChange={(e) => setTransferForm({ ...transferForm, amount: e.target.value })}
+                      required
+                    />
+
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          checked={transferForm.isInternational}
+                          onChange={(e) => setTransferForm({ ...transferForm, isInternational: e.target.checked })}
+                        />
+                      }
+                      label={
+                        <Stack direction="row" alignItems="center" spacing={1}>
+                          <Typography>International Transfer</Typography>
+                          <InternationalIcon fontSize="small" />
+                          <Chip label="10% commission" size="small" color="warning" />
+                        </Stack>
+                      }
+                    />
+
+                    {transferForm.amount && (
+                      <Paper elevation={0} sx={{ p: 2, bgcolor: "grey.100" }}>
+                        <Stack spacing={1}>
+                          <Typography variant="body2">
+                            Commission ({transferForm.isInternational ? "10%" : "2%"}):{" "}
+                            {formatCurrency(
+                              parseFloat(transferForm.amount || 0) * (transferForm.isInternational ? 0.1 : 0.02)
+                            )}
+                          </Typography>
+                          <Typography variant="body1" fontWeight="bold">
+                            Total:{" "}
+                            {formatCurrency(
+                              parseFloat(transferForm.amount || 0) * (1 + (transferForm.isInternational ? 0.1 : 0.02))
+                            )}
+                          </Typography>
+                        </Stack>
+                      </Paper>
+                    )}
+
+                    <Paper elevation={0} sx={{ p: 2, bgcolor: "primary.50" }}>
+                      <Typography variant="body2" color="primary">
+                        Available Balance: {formatCurrency(currentUserData?.balance || 0)}
+                      </Typography>
+                    </Paper>
+
+                    <Button
+                      type="submit"
+                      variant="contained"
+                      size="large"
+                      fullWidth
+                      startIcon={<TransferIcon />}
+                      sx={{
+                        background: "linear-gradient(45deg, #667eea 30%, #764ba2 90%)",
+                        boxShadow: "0 3px 5px 2px rgba(102, 126, 234, .3)",
+                      }}
+                    >
+                      Send Money
+                    </Button>
+                  </Stack>
+                </form>
+              </CardContent>
+            </Card>
+          </Box>
+        );
+
+      case "deposit":
+        return (
+          <Box sx={{ mt: 3, maxWidth: 600, mx: "auto" }}>
+            <Card>
+              <CardContent>
+                <Typography variant="h5" gutterBottom>
+                  Add Funds
+                </Typography>
+                <Alert severity="info" icon={<PendingIcon />} sx={{ mb: 3 }}>
+                  Deposit requests require admin approval before funds are added to your account.
+                </Alert>
+                <form onSubmit={handleDeposit}>
+                  <Stack spacing={3}>
+                    <TextField
+                      fullWidth
+                      label="Amount"
+                      type="number"
+                      inputProps={{ step: "0.01", min: "0.01" }}
+                      value={depositAmount}
+                      onChange={(e) => setDepositAmount(e.target.value)}
+                      required
+                    />
+
+                    <Button
+                      type="submit"
+                      variant="contained"
+                      size="large"
+                      fullWidth
+                      startIcon={<DepositIcon />}
+                      sx={{
+                        background: "linear-gradient(45deg, #4caf50 30%, #2e7d32 90%)",
+                        boxShadow: "0 3px 5px 2px rgba(76, 175, 80, .3)",
+                      }}
+                    >
+                      Request Deposit
+                    </Button>
+                  </Stack>
+                </form>
+              </CardContent>
+            </Card>
+          </Box>
+        );
+
+      case "withdraw":
+        return (
+          <Box sx={{ mt: 3, maxWidth: 600, mx: "auto" }}>
+            <Card>
+              <CardContent>
+                <Typography variant="h5" gutterBottom>
+                  Withdraw Funds
+                </Typography>
+                <Alert severity="info" icon={<PendingIcon />} sx={{ mb: 3 }}>
+                  Withdrawal requests require admin approval before funds are deducted from your account.
+                </Alert>
+                <form onSubmit={handleWithdraw}>
+                  <Stack spacing={3}>
+                    <TextField
+                      fullWidth
+                      label="Amount"
+                      type="number"
+                      inputProps={{
+                        step: "0.01",
+                        min: "0.01",
+                        max: currentUserData?.balance,
+                      }}
+                      value={withdrawAmount}
+                      onChange={(e) => setWithdrawAmount(e.target.value)}
+                      required
+                    />
+
+                    <Typography variant="body2" color="text.secondary">
+                      Available balance: {formatCurrency(currentUserData?.balance || 0)}
+                    </Typography>
+
+                    <Button
+                      type="submit"
+                      variant="contained"
+                      size="large"
+                      fullWidth
+                      startIcon={<WithdrawIcon />}
+                      sx={{
+                        background: "linear-gradient(45deg, #f44336 30%, #c62828 90%)",
+                        boxShadow: "0 3px 5px 2px rgba(244, 67, 54, .3)",
+                      }}
+                    >
+                      Request Withdrawal
+                    </Button>
+                  </Stack>
+                </form>
+              </CardContent>
+            </Card>
+          </Box>
+        );
+
+      case "history":
+        return (
+          <Box sx={{ mt: 3 }}>
+            <Card>
+              <CardContent>
+                <Typography variant="h5" gutterBottom>
+                  Transaction History
+                </Typography>
+                <Divider sx={{ mb: 2 }} />
+                {userTransactions.length > 0 ? (
+                  <List>
+                    {userTransactions.map((txn) => (
+                      <Fade in key={txn.id}>
+                        <ListItem sx={{ py: 2 }}>
+                          <ListItemAvatar>
+                            <Avatar
+                              sx={{
+                                bgcolor:
+                                  txn.type === "deposit"
+                                    ? "success.main"
+                                    : txn.type === "withdraw"
+                                    ? "error.main"
+                                    : "primary.main",
+                              }}
+                            >
+                              {txn.type === "deposit" ? (
+                                <DepositArrowIcon />
+                              ) : txn.type === "withdraw" ? (
+                                <WithdrawArrowIcon />
+                              ) : (
+                                <TransferArrowIcon />
+                              )}
+                            </Avatar>
+                          </ListItemAvatar>
+                          <ListItemText
+                            primary={
+                              txn.type === "deposit"
+                                ? "Deposit"
+                                : txn.type === "withdraw"
+                                ? "Withdrawal"
+                                : txn.fromId === currentUserData.id
+                                ? `Transfer to ${getRecipientName(txn.toId)}`
+                                : `Transfer from ${getRecipientName(txn.fromId)}`
+                            }
+                            secondary={
+                              <>
+                                {formatDate(txn.timestamp)} •{" "}
+                                {txn.isInternational ? (
+                                  <Stack direction="row" alignItems="center" spacing={0.5} component="span">
+                                    <InternationalIcon fontSize="small" />
+                                    <span>International</span>
+                                  </Stack>
+                                ) : (
+                                  <Stack direction="row" alignItems="center" spacing={0.5} component="span">
+                                    <LocalIcon fontSize="small" />
+                                    <span>Domestic</span>
+                                  </Stack>
+                                )}
+                                {txn.commission > 0 && (
+                                  <Box component="span" display="block" fontSize="0.75rem">
+                                    Commission: {formatCurrency(txn.commission)}
+                                  </Box>
+                                )}
+                              </>
+                            }
+                          />
+                          <ListItemSecondaryAction>
+                            <Stack direction="column" alignItems="flex-end" spacing={1}>
+                              <Typography
+                                variant="body1"
+                                fontWeight="bold"
+                                color={
+                                  txn.fromId === currentUserData.id && txn.type !== "deposit"
+                                    ? "error.main"
+                                    : "success.main"
+                                }
+                              >
+                                {txn.fromId === currentUserData.id && txn.type !== "deposit" ? "-" : "+"}
+                                {formatCurrency(txn.amount)}
+                              </Typography>
+                              <Chip
+                                size="small"
+                                label={txn.status}
+                                color={txn.status === "pending" ? "warning" : "success"}
+                                icon={txn.status === "pending" ? <PendingIcon /> : <ApprovedIcon />}
+                              />
+                            </Stack>
+                          </ListItemSecondaryAction>
+                        </ListItem>
+                      </Fade>
+                    ))}
+                  </List>
+                ) : (
+                  <Box sx={{ textAlign: "center", py: 4 }}>
+                    <Typography variant="body1" color="text.secondary">
+                      No transactions found
+                    </Typography>
+                  </Box>
+                )}
+              </CardContent>
+            </Card>
+          </Box>
+        );
+
+      default:
+        return null;
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-4">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">MT</span>
-              </div>
-              <h1 className="text-xl font-semibold text-gray-900">MoneyTransfer</h1>
-            </div>
-            <div className="flex items-center space-x-4">
-              <div className="text-right">
-                <p className="text-sm font-medium text-gray-900">Welcome, {currentUserData?.name}</p>
-                <p className="text-sm text-gray-500">Balance: {formatCurrency(currentUserData?.balance || 0)}</p>
-              </div>
-              <button
+    <Box
+      sx={{
+        minHeight: "100vh",
+        background: "linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%)",
+      }}
+    >
+      {/* App Bar */}
+      <Paper
+        elevation={1}
+        sx={{
+          position: "sticky",
+          top: 0,
+          zIndex: 10,
+          borderRadius: 0,
+          background: "rgba(255, 255, 255, 0.8)",
+          backdropFilter: "blur(10px)",
+        }}
+      >
+        <Container maxWidth="xl">
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              py: 2,
+            }}
+          >
+            <Stack direction="row" alignItems="center" spacing={2}>
+              <Avatar
+                sx={{
+                  bgcolor: "primary.main",
+                  color: "white",
+                  width: 40,
+                  height: 40,
+                }}
+              >
+                MT
+              </Avatar>
+              <Typography variant="h6" fontWeight="bold">
+                MoneyTransfer
+              </Typography>
+            </Stack>
+
+            <Stack direction="row" alignItems="center" spacing={2}>
+              <Stack direction="column" alignItems="flex-end">
+                <Typography variant="body2" fontWeight="medium">
+                  Welcome, {currentUserData?.name}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Balance: {formatCurrency(currentUserData?.balance || 0)}
+                </Typography>
+              </Stack>
+              <Button
+                variant="outlined"
+                color="error"
+                startIcon={<LogoutIcon />}
                 onClick={() => {
                   dispatch(logout());
                   navigate("/");
                 }}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition duration-200"
               >
                 Logout
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
+              </Button>
+            </Stack>
+          </Box>
+        </Container>
+      </Paper>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Navigation Tabs */}
-        <div className="border-b border-gray-200 mb-8">
-          <nav className="-mb-px flex space-x-8">
-            {["overview", "transfer", "deposit", "withdraw", "history"].map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`py-2 px-1 border-b-2 font-medium text-sm capitalize ${
-                  activeTab === tab
-                    ? "border-blue-500 text-blue-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
-              >
-                {tab}
-              </button>
-            ))}
-          </nav>
-        </div>
+      {/* Main Content */}
+      <Container maxWidth="xl" sx={{ py: 4 }}>
+        {/* Tabs */}
+        <Paper
+          elevation={0}
+          sx={{
+            mb: 2,
+            borderRadius: 2,
+            bgcolor: "rgba(255, 255, 255, 0.7)",
+            backdropFilter: "blur(10px)",
+          }}
+        >
+          <Tabs
+            value={activeTab}
+            onChange={(e, newValue) => setActiveTab(newValue)}
+            variant={isMobile ? "scrollable" : "standard"}
+            scrollButtons={isMobile ? "auto" : false}
+            allowScrollButtonsMobile
+            sx={{
+              "& .MuiTabs-indicator": {
+                height: 3,
+                background: "linear-gradient(45deg, #667eea 30%, #764ba2 90%)",
+              },
+            }}
+          >
+            <Tab value="overview" label="Overview" icon={<BalanceIcon />} iconPosition="start" sx={{ minHeight: 64 }} />
+            <Tab
+              value="transfer"
+              label="Transfer"
+              icon={<TransferIcon />}
+              iconPosition="start"
+              sx={{ minHeight: 64 }}
+            />
+            <Tab value="deposit" label="Deposit" icon={<DepositIcon />} iconPosition="start" sx={{ minHeight: 64 }} />
+            <Tab
+              value="withdraw"
+              label="Withdraw"
+              icon={<WithdrawIcon />}
+              iconPosition="start"
+              sx={{ minHeight: 64 }}
+            />
+            <Tab value="history" label="History" icon={<HistoryIcon />} iconPosition="start" sx={{ minHeight: 64 }} />
+          </Tabs>
+        </Paper>
 
-        {/* Overview Tab */}
-        {activeTab === "overview" && (
-          <div className="space-y-6">
-            {/* Balance Card */}
-            <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl p-6 text-white">
-              <h2 className="text-lg font-medium mb-2">Current Balance</h2>
-              <p className="text-3xl font-bold">{formatCurrency(currentUserData?.balance || 0)}</p>
-              <p className="text-blue-100 mt-2">Available for transfer</p>
-            </div>
-
-            {/* Quick Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="bg-white p-6 rounded-lg shadow">
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Total Transactions</h3>
-                <p className="text-2xl font-bold text-blue-600">{userTransactions.length}</p>
-              </div>
-              <div className="bg-white p-6 rounded-lg shadow">
-                <h3 className="text-lg font-medium text-gray-900 mb-2">Pending Approval</h3>
-                <p className="text-2xl font-bold text-yellow-600">{pendingTransactions.length}</p>
-              </div>
-              <div className="bg-white p-6 rounded-lg shadow">
-                <h3 className="text-lg font-medium text-gray-900 mb-2">This Month</h3>
-                <p className="text-2xl font-bold text-green-600">{thisMonthTransactions.length}</p>
-              </div>
-            </div>
-
-            {/* Recent Transactions */}
-            <div className="bg-white rounded-lg shadow">
-              <div className="p-6 border-b border-gray-200">
-                <h3 className="text-lg font-medium text-gray-900">Recent Transactions</h3>
-              </div>
-              <div className="divide-y divide-gray-200">
-                {userTransactions.slice(0, 5).map((txn) => (
-                  <div key={txn.id} className="p-6 flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                      <div
-                        className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold ${
-                          txn.type === "deposit"
-                            ? "bg-green-500"
-                            : txn.type === "withdraw"
-                            ? "bg-red-500"
-                            : "bg-blue-500"
-                        }`}
-                      >
-                        {txn.type === "deposit" ? "↓" : txn.type === "withdraw" ? "↑" : "→"}
-                      </div>
-                      <div>
-                        <p className="font-medium">
-                          {txn.type === "deposit"
-                            ? "Deposit"
-                            : txn.type === "withdraw"
-                            ? "Withdrawal"
-                            : txn.fromId === currentUserData.id
-                            ? `To ${getRecipientName(txn.toId)}`
-                            : `From ${getRecipientName(txn.fromId)}`}
-                        </p>
-                        <p className="text-sm text-gray-500">{formatDate(txn.timestamp)}</p>
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <p
-                        className={`font-medium ${
-                          txn.fromId === currentUserData.id && txn.type !== "deposit"
-                            ? "text-red-600"
-                            : "text-green-600"
-                        }`}
-                      >
-                        {txn.fromId === currentUserData.id && txn.type !== "deposit" ? "-" : "+"}
-                        {formatCurrency(txn.amount)}
-                      </p>
-                      <p className={`text-xs ${txn.status === "pending" ? "text-yellow-600" : "text-green-600"}`}>
-                        {txn.status}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-                {userTransactions.length === 0 && (
-                  <div className="p-6 text-center text-gray-500">No transactions yet</div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Transfer Tab */}
-        {activeTab === "transfer" && (
-          <div className="max-w-md mx-auto">
-            <div className="bg-white p-6 rounded-lg shadow">
-              <h2 className="text-xl font-semibold mb-6">Send Money</h2>
-              <form onSubmit={handleTransfer} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Recipient</label>
-                  <select
-                    value={transferForm.recipientId}
-                    onChange={(e) => setTransferForm({ ...transferForm, recipientId: e.target.value })}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="">Select recipient</option>
-                    {users
-                      .filter((u) => u.id !== currentUserData?.id && !u.isAdmin)
-                      .map((user) => (
-                        <option key={user.id} value={user.id}>
-                          {user.name} ({user.id})
-                        </option>
-                      ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Amount</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0.01"
-                    value={transferForm.amount}
-                    onChange={(e) => setTransferForm({ ...transferForm, amount: e.target.value })}
-                    placeholder="0.00"
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    id="international"
-                    checked={transferForm.isInternational}
-                    onChange={(e) => setTransferForm({ ...transferForm, isInternational: e.target.checked })}
-                    className="mr-2"
-                  />
-                  <label htmlFor="international" className="text-sm text-gray-700">
-                    International Transfer (10% commission)
-                  </label>
-                </div>
-                {transferForm.amount && (
-                  <div className="bg-gray-50 p-3 rounded">
-                    <p className="text-sm text-gray-600">
-                      Commission ({transferForm.isInternational ? "10%" : "2%"}):{" "}
-                      {formatCurrency(
-                        parseFloat(transferForm.amount || 0) * (transferForm.isInternational ? 0.1 : 0.02)
-                      )}
-                    </p>
-                    <p className="text-sm font-medium">
-                      Total:{" "}
-                      {formatCurrency(
-                        parseFloat(transferForm.amount || 0) * (1 + (transferForm.isInternational ? 0.1 : 0.02))
-                      )}
-                    </p>
-                  </div>
-                )}
-                <div className="bg-blue-50 p-3 rounded">
-                  <p className="text-sm text-blue-700">
-                    Available Balance: {formatCurrency(currentUserData?.balance || 0)}
-                  </p>
-                </div>
-                <button
-                  type="submit"
-                  className="w-full py-2 px-4 bg-blue-600 text-white font-medium rounded-md hover:bg-blue-700 transition duration-200"
-                >
-                  Send Money
-                </button>
-              </form>
-            </div>
-          </div>
-        )}
-
-        {/* Deposit Tab */}
-        {activeTab === "deposit" && (
-          <div className="max-w-md mx-auto">
-            <div className="bg-white p-6 rounded-lg shadow">
-              <h2 className="text-xl font-semibold mb-6">Add Funds</h2>
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
-                <p className="text-sm text-yellow-800">
-                  💡 Deposit requests require admin approval before funds are added to your account.
-                </p>
-              </div>
-              <form onSubmit={handleDeposit} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Amount</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0.01"
-                    value={depositAmount}
-                    onChange={(e) => setDepositAmount(e.target.value)}
-                    placeholder="0.00"
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <button
-                  type="submit"
-                  className="w-full py-2 px-4 bg-green-600 text-white font-medium rounded-md hover:bg-green-700 transition duration-200"
-                >
-                  Request Deposit
-                </button>
-              </form>
-            </div>
-          </div>
-        )}
-
-        {/* Withdraw Tab */}
-        {activeTab === "withdraw" && (
-          <div className="max-w-md mx-auto">
-            <div className="bg-white p-6 rounded-lg shadow">
-              <h2 className="text-xl font-semibold mb-6">Withdraw Funds</h2>
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
-                <p className="text-sm text-yellow-800">
-                  💡 Withdrawal requests require admin approval before funds are deducted from your account.
-                </p>
-              </div>
-              <form onSubmit={handleWithdraw} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Amount</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0.01"
-                    max={currentUserData?.balance}
-                    value={withdrawAmount}
-                    onChange={(e) => setWithdrawAmount(e.target.value)}
-                    placeholder="0.00"
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <p className="text-sm text-gray-600">
-                  Available balance: {formatCurrency(currentUserData?.balance || 0)}
-                </p>
-                <button
-                  type="submit"
-                  className="w-full py-2 px-4 bg-red-600 text-white font-medium rounded-md hover:bg-red-700 transition duration-200"
-                >
-                  Request Withdrawal
-                </button>
-              </form>
-            </div>
-          </div>
-        )}
-
-        {/* History Tab */}
-        {activeTab === "history" && (
-          <div className="bg-white rounded-lg shadow">
-            <div className="p-6 border-b border-gray-200">
-              <h2 className="text-xl font-semibold">Transaction History</h2>
-            </div>
-            <div className="divide-y divide-gray-200">
-              {userTransactions.length > 0 ? (
-                userTransactions.map((txn) => (
-                  <div key={txn.id} className="p-6">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
-                        <div
-                          className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-bold ${
-                            txn.type === "deposit"
-                              ? "bg-green-500"
-                              : txn.type === "withdraw"
-                              ? "bg-red-500"
-                              : "bg-blue-500"
-                          }`}
-                        >
-                          {txn.type === "deposit" ? "↓" : txn.type === "withdraw" ? "↑" : "→"}
-                        </div>
-                        <div>
-                          <h3 className="font-medium">
-                            {txn.type === "deposit"
-                              ? "Deposit"
-                              : txn.type === "withdraw"
-                              ? "Withdrawal"
-                              : txn.fromId === currentUserData.id
-                              ? `Transfer to ${getRecipientName(txn.toId)}`
-                              : `Transfer from ${getRecipientName(txn.fromId)}`}
-                          </h3>
-                          <p className="text-sm text-gray-500">
-                            {formatDate(txn.timestamp)} • {txn.isInternational ? "International" : "Domestic"}
-                          </p>
-                          {txn.commission > 0 && (
-                            <p className="text-xs text-gray-400">Commission: {formatCurrency(txn.commission)}</p>
-                          )}
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p
-                          className={`text-lg font-semibold ${
-                            txn.fromId === currentUserData.id && txn.type !== "deposit"
-                              ? "text-red-600"
-                              : "text-green-600"
-                          }`}
-                        >
-                          {txn.fromId === currentUserData.id && txn.type !== "deposit" ? "-" : "+"}
-                          {formatCurrency(txn.amount)}
-                        </p>
-                        <span
-                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            txn.status === "pending" ? "bg-yellow-100 text-yellow-800" : "bg-green-100 text-green-800"
-                          }`}
-                        >
-                          {txn.status}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="p-6 text-center text-gray-500">No transactions found</div>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
+        {/* Tab Content */}
+        {renderTabContent()}
+      </Container>
+    </Box>
   );
 };
 

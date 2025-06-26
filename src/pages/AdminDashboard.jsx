@@ -3,9 +3,63 @@ import { useDispatch, useSelector } from "react-redux";
 import { approveTransaction } from "../redux/txnSlice";
 import { updateBalance, logout } from "../redux/userSlice";
 import { useNavigate } from "react-router-dom";
+import {
+  Box,
+  Typography,
+  Avatar,
+  Button,
+  Card,
+  CardContent,
+  Divider,
+  Paper,
+  List,
+  ListItem,
+  ListItemAvatar,
+  ListItemText,
+  ListItemSecondaryAction,
+  Chip,
+  Tab,
+  Tabs,
+  useTheme,
+  useMediaQuery,
+  Container,
+  Stack,
+  Grid,
+  Fade,
+  Grow,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  IconButton,
+  Tooltip,
+} from "@mui/material";
+import {
+  AdminPanelSettings as AdminIcon,
+  CheckCircle as ApprovedIcon,
+  Pending as PendingIcon,
+  Public as InternationalIcon,
+  LocalAtm as LocalIcon,
+  AccountBalance as BalanceIcon,
+  History as HistoryIcon,
+  People as UsersIcon,
+  Analytics as AnalyticsIcon,
+  Logout as LogoutIcon,
+  ArrowUpward as DepositIcon,
+  ArrowDownward as WithdrawIcon,
+  CompareArrows as TransferIcon,
+  MonetizationOn as CommissionIcon,
+  Today as TodayIcon,
+  Receipt as TransactionsIcon,
+} from "@mui/icons-material";
+
 const AdminDashboard = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const { transactions } = useSelector((state) => state.txn);
   const { users, currentUser } = useSelector((state) => state.user);
   const [activeTab, setActiveTab] = useState("pending");
@@ -13,14 +67,10 @@ const AdminDashboard = () => {
   const pendingTxns = transactions.filter((txn) => txn.status === "pending");
   const approvedTxns = transactions.filter((txn) => txn.status === "approved");
 
-  // Calculate total commission earned
+  // Calculate stats
   const totalCommission = approvedTxns.reduce((sum, txn) => sum + (txn.commission || 0), 0);
-
-  // Calculate today's transactions
   const today = new Date().toDateString();
   const todayTxns = transactions.filter((txn) => new Date(txn.timestamp).toDateString() === today);
-
-  // Calculate monthly stats
   const currentMonth = new Date().getMonth();
   const currentYear = new Date().getFullYear();
   const monthlyTxns = transactions.filter((txn) => {
@@ -64,447 +114,587 @@ const AdminDashboard = () => {
   const getTransactionTypeColor = (type) => {
     switch (type) {
       case "deposit":
-        return "bg-green-100 text-green-800";
+        return "success";
       case "withdraw":
-        return "bg-red-100 text-red-800";
+        return "error";
       case "transfer":
-        return "bg-blue-100 text-blue-800";
+        return "primary";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "default";
     }
   };
 
-  const getStatusColor = (status) => {
-    return status === "pending" ? "bg-yellow-100 text-yellow-800" : "bg-green-100 text-green-800";
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case "pending":
+        return (
+          <Box sx={{ mt: 3 }}>
+            <Card>
+              <CardContent>
+                <Typography variant="h5" gutterBottom>
+                  Pending Transactions ({pendingTxns.length})
+                </Typography>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  Review and approve pending transactions below
+                </Typography>
+                <Divider sx={{ my: 2 }} />
+
+                {pendingTxns.length > 0 ? (
+                  <TableContainer>
+                    <Table>
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>Type</TableCell>
+                          <TableCell>From</TableCell>
+                          <TableCell>To</TableCell>
+                          <TableCell>Amount</TableCell>
+                          <TableCell>Commission</TableCell>
+                          <TableCell>Date</TableCell>
+                          <TableCell align="right">Action</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {pendingTxns.map((txn) => (
+                          <TableRow key={txn.id} hover>
+                            <TableCell>
+                              <Chip label={txn.type} color={getTransactionTypeColor(txn.type)} size="small" />
+                            </TableCell>
+                            <TableCell>{getUserName(txn.fromId)}</TableCell>
+                            <TableCell>{getUserName(txn.toId)}</TableCell>
+                            <TableCell>{formatCurrency(txn.amount)}</TableCell>
+                            <TableCell>
+                              <Stack direction="row" alignItems="center" spacing={0.5}>
+                                <Typography>{formatCurrency(txn.commission || 0)}</Typography>
+                                {txn.isInternational && (
+                                  <Tooltip title="International">
+                                    <InternationalIcon fontSize="small" color="primary" />
+                                  </Tooltip>
+                                )}
+                              </Stack>
+                            </TableCell>
+                            <TableCell>{formatDate(txn.timestamp)}</TableCell>
+                            <TableCell align="right">
+                              <Button
+                                variant="contained"
+                                color="success"
+                                size="small"
+                                onClick={() => handleApprove(txn)}
+                                startIcon={<ApprovedIcon />}
+                              >
+                                Approve
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                ) : (
+                  <Box sx={{ textAlign: "center", py: 4 }}>
+                    <Typography variant="body1" color="text.secondary">
+                      No pending transactions
+                    </Typography>
+                  </Box>
+                )}
+              </CardContent>
+            </Card>
+          </Box>
+        );
+
+      case "history":
+        return (
+          <Box sx={{ mt: 3 }}>
+            <Card>
+              <CardContent>
+                <Typography variant="h5" gutterBottom>
+                  Transaction History ({approvedTxns.length})
+                </Typography>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  All approved transactions
+                </Typography>
+                <Divider sx={{ my: 2 }} />
+
+                {approvedTxns.length > 0 ? (
+                  <TableContainer>
+                    <Table>
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>Type</TableCell>
+                          <TableCell>From</TableCell>
+                          <TableCell>To</TableCell>
+                          <TableCell>Amount</TableCell>
+                          <TableCell>Commission</TableCell>
+                          <TableCell>Date</TableCell>
+                          <TableCell>Status</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {approvedTxns.slice(0, 20).map((txn) => (
+                          <TableRow key={txn.id} hover>
+                            <TableCell>
+                              <Chip label={txn.type} color={getTransactionTypeColor(txn.type)} size="small" />
+                            </TableCell>
+                            <TableCell>{getUserName(txn.fromId)}</TableCell>
+                            <TableCell>{getUserName(txn.toId)}</TableCell>
+                            <TableCell>{formatCurrency(txn.amount)}</TableCell>
+                            <TableCell>
+                              <Stack direction="row" alignItems="center" spacing={0.5}>
+                                <Typography>{formatCurrency(txn.commission || 0)}</Typography>
+                                {txn.isInternational && (
+                                  <Tooltip title="International">
+                                    <InternationalIcon fontSize="small" color="primary" />
+                                  </Tooltip>
+                                )}
+                              </Stack>
+                            </TableCell>
+                            <TableCell>{formatDate(txn.timestamp)}</TableCell>
+                            <TableCell>
+                              <Chip label={txn.status} color="success" size="small" icon={<ApprovedIcon />} />
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                ) : (
+                  <Box sx={{ textAlign: "center", py: 4 }}>
+                    <Typography variant="body1" color="text.secondary">
+                      No transaction history
+                    </Typography>
+                  </Box>
+                )}
+              </CardContent>
+            </Card>
+          </Box>
+        );
+
+      case "users":
+        return (
+          <Box sx={{ mt: 3 }}>
+            <Card>
+              <CardContent>
+                <Typography variant="h5" gutterBottom>
+                  User Management ({users.length})
+                </Typography>
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  Overview of all users and their balances
+                </Typography>
+                <Divider sx={{ my: 2 }} />
+
+                <TableContainer>
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>User</TableCell>
+                        <TableCell>ID</TableCell>
+                        <TableCell>Balance</TableCell>
+                        <TableCell>Role</TableCell>
+                        <TableCell>Transactions</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {users.map((user) => {
+                        const userTxns = transactions.filter((txn) => txn.fromId === user.id || txn.toId === user.id);
+                        return (
+                          <TableRow key={user.id} hover>
+                            <TableCell>
+                              <Stack direction="row" alignItems="center" spacing={2}>
+                                <Avatar sx={{ bgcolor: user.isAdmin ? "error.main" : "primary.main" }}>
+                                  {user.name.charAt(0)}
+                                </Avatar>
+                                <Typography>{user.name}</Typography>
+                              </Stack>
+                            </TableCell>
+                            <TableCell>{user.id}</TableCell>
+                            <TableCell>
+                              <Typography fontWeight="medium">
+                                {user.balance !== undefined ? formatCurrency(user.balance) : "N/A"}
+                              </Typography>
+                            </TableCell>
+                            <TableCell>
+                              <Chip
+                                label={user.isAdmin ? "Admin" : "User"}
+                                color={user.isAdmin ? "error" : "primary"}
+                                size="small"
+                              />
+                            </TableCell>
+                            <TableCell>{userTxns.length}</TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </CardContent>
+            </Card>
+          </Box>
+        );
+
+      case "analytics":
+        return (
+          <Box sx={{ mt: 3 }}>
+            <Grid container spacing={3}>
+              {/* Commission Breakdown */}
+              <Grid item xs={12} md={6}>
+                <Card>
+                  <CardContent>
+                    <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
+                      <CommissionIcon color="primary" />
+                      <Typography variant="h6">Commission Breakdown</Typography>
+                    </Stack>
+                    <Stack spacing={2}>
+                      <Box>
+                        <Typography variant="body2" color="text.secondary">
+                          Domestic Transfers (2%)
+                        </Typography>
+                        <Typography variant="h6">
+                          {formatCurrency(
+                            approvedTxns
+                              .filter((txn) => txn.type === "transfer" && !txn.isInternational)
+                              .reduce((sum, txn) => sum + (txn.commission || 0), 0)
+                          )}
+                        </Typography>
+                      </Box>
+                      <Box>
+                        <Typography variant="body2" color="text.secondary">
+                          International Transfers (10%)
+                        </Typography>
+                        <Typography variant="h6">
+                          {formatCurrency(
+                            approvedTxns
+                              .filter((txn) => txn.type === "transfer" && txn.isInternational)
+                              .reduce((sum, txn) => sum + (txn.commission || 0), 0)
+                          )}
+                        </Typography>
+                      </Box>
+                      <Divider />
+                      <Box>
+                        <Typography variant="body1" fontWeight="bold">
+                          Total Commission
+                        </Typography>
+                        <Typography variant="h5" color="success.main">
+                          {formatCurrency(totalCommission)}
+                        </Typography>
+                      </Box>
+                    </Stack>
+                  </CardContent>
+                </Card>
+              </Grid>
+
+              {/* Monthly Summary */}
+              <Grid item xs={12} md={6}>
+                <Card>
+                  <CardContent>
+                    <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
+                      <TodayIcon color="primary" />
+                      <Typography variant="h6">This Month's Summary</Typography>
+                    </Stack>
+                    <Grid container spacing={2}>
+                      <Grid item xs={6}>
+                        <Paper elevation={0} sx={{ p: 2, bgcolor: "grey.100", borderRadius: 2 }}>
+                          <Typography variant="body2" color="text.secondary">
+                            Total Transactions
+                          </Typography>
+                          <Typography variant="h6">{monthlyTxns.length}</Typography>
+                        </Paper>
+                      </Grid>
+                      <Grid item xs={6}>
+                        <Paper elevation={0} sx={{ p: 2, bgcolor: "grey.100", borderRadius: 2 }}>
+                          <Typography variant="body2" color="text.secondary">
+                            Today's Transactions
+                          </Typography>
+                          <Typography variant="h6">{todayTxns.length}</Typography>
+                        </Paper>
+                      </Grid>
+                      <Grid item xs={4}>
+                        <Paper elevation={0} sx={{ p: 2, bgcolor: "success.50", borderRadius: 2 }}>
+                          <Typography variant="body2" color="text.secondary">
+                            Deposits
+                          </Typography>
+                          <Typography variant="h6" color="success.main">
+                            {monthlyTxns.filter((txn) => txn.type === "deposit").length}
+                          </Typography>
+                        </Paper>
+                      </Grid>
+                      <Grid item xs={4}>
+                        <Paper elevation={0} sx={{ p: 2, bgcolor: "primary.50", borderRadius: 2 }}>
+                          <Typography variant="body2" color="text.secondary">
+                            Transfers
+                          </Typography>
+                          <Typography variant="h6" color="primary.main">
+                            {monthlyTxns.filter((txn) => txn.type === "transfer").length}
+                          </Typography>
+                        </Paper>
+                      </Grid>
+                      <Grid item xs={4}>
+                        <Paper elevation={0} sx={{ p: 2, bgcolor: "error.50", borderRadius: 2 }}>
+                          <Typography variant="body2" color="text.secondary">
+                            Withdrawals
+                          </Typography>
+                          <Typography variant="h6" color="error.main">
+                            {monthlyTxns.filter((txn) => txn.type === "withdraw").length}
+                          </Typography>
+                        </Paper>
+                      </Grid>
+                    </Grid>
+                  </CardContent>
+                </Card>
+              </Grid>
+
+              {/* Transaction Distribution */}
+              <Grid item xs={12}>
+                <Card>
+                  <CardContent>
+                    <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
+                      <TransactionsIcon color="primary" />
+                      <Typography variant="h6">Transaction Types Distribution</Typography>
+                    </Stack>
+                    <Grid container spacing={3} justifyContent="center">
+                      <Grid item xs={6} sm={4} md={2}>
+                        <Stack alignItems="center">
+                          <Avatar sx={{ bgcolor: "success.light", width: 56, height: 56 }}>
+                            <DepositIcon color="success" />
+                          </Avatar>
+                          <Typography variant="body2" color="text.secondary" mt={1}>
+                            Deposits
+                          </Typography>
+                          <Typography variant="h6" color="success.main">
+                            {transactions.filter((txn) => txn.type === "deposit").length}
+                          </Typography>
+                        </Stack>
+                      </Grid>
+                      <Grid item xs={6} sm={4} md={2}>
+                        <Stack alignItems="center">
+                          <Avatar sx={{ bgcolor: "primary.light", width: 56, height: 56 }}>
+                            <TransferIcon color="primary" />
+                          </Avatar>
+                          <Typography variant="body2" color="text.secondary" mt={1}>
+                            Transfers
+                          </Typography>
+                          <Typography variant="h6" color="primary.main">
+                            {transactions.filter((txn) => txn.type === "transfer").length}
+                          </Typography>
+                        </Stack>
+                      </Grid>
+                      <Grid item xs={6} sm={4} md={2}>
+                        <Stack alignItems="center">
+                          <Avatar sx={{ bgcolor: "error.light", width: 56, height: 56 }}>
+                            <WithdrawIcon color="error" />
+                          </Avatar>
+                          <Typography variant="body2" color="text.secondary" mt={1}>
+                            Withdrawals
+                          </Typography>
+                          <Typography variant="h6" color="error.main">
+                            {transactions.filter((txn) => txn.type === "withdraw").length}
+                          </Typography>
+                        </Stack>
+                      </Grid>
+                    </Grid>
+                  </CardContent>
+                </Card>
+              </Grid>
+            </Grid>
+          </Box>
+        );
+
+      default:
+        return null;
+    }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center space-x-4">
-              <div className="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">A</span>
-              </div>
-              <h1 className="text-xl font-semibold text-gray-900">Admin Panel</h1>
-            </div>
-            <div className="flex items-center space-x-4">
-              <div className="text-right">
-                <p className="text-sm font-medium text-gray-900">Welcome, {currentUser?.name}</p>
-                <p className="text-sm text-gray-500">Administrator</p>
-              </div>
-              <button
+    <Box
+      sx={{
+        minHeight: "100vh",
+        background: "linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%)",
+      }}
+    >
+      {/* App Bar */}
+      <Paper
+        elevation={1}
+        sx={{
+          position: "sticky",
+          top: 0,
+          zIndex: 10,
+          borderRadius: 0,
+          background: "rgba(255, 255, 255, 0.8)",
+          backdropFilter: "blur(10px)",
+        }}
+      >
+        <Container maxWidth="xl">
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              py: 2,
+            }}
+          >
+            <Stack direction="row" alignItems="center" spacing={2}>
+              <Avatar
+                sx={{
+                  bgcolor: "error.main",
+                  color: "white",
+                  width: 40,
+                  height: 40,
+                }}
+              >
+                <AdminIcon />
+              </Avatar>
+              <Typography variant="h6" fontWeight="bold">
+                Admin Panel
+              </Typography>
+            </Stack>
+
+            <Stack direction="row" alignItems="center" spacing={2}>
+              <Stack direction="column" alignItems="flex-end">
+                <Typography variant="body2" fontWeight="medium">
+                  Welcome, {currentUser?.name}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Administrator
+                </Typography>
+              </Stack>
+              <Button
+                variant="outlined"
+                color="error"
+                startIcon={<LogoutIcon />}
                 onClick={() => {
                   dispatch(logout());
                   navigate("/");
                 }}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition duration-200"
               >
                 Logout
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
+              </Button>
+            </Stack>
+          </Box>
+        </Container>
+      </Paper>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Stats Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <div className="bg-white p-6 rounded-lg shadow">
-            <div className="flex items-center">
-              <div className="w-10 h-10 bg-yellow-500 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold">⏳</span>
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Pending Approvals</p>
-                <p className="text-2xl font-bold text-gray-900">{pendingTxns.length}</p>
-              </div>
-            </div>
-          </div>
+      {/* Stats Overview */}
+      <Container maxWidth="xl" sx={{ py: 3 }}>
+        <Grid container spacing={3}>
+          <Grid item xs={12} sm={6} md={3}>
+            <Card>
+              <CardContent>
+                <Stack direction="row" alignItems="center" spacing={2}>
+                  <Avatar sx={{ bgcolor: "warning.light" }}>
+                    <PendingIcon color="warning" />
+                  </Avatar>
+                  <Box>
+                    <Typography variant="body2" color="text.secondary">
+                      Pending Approvals
+                    </Typography>
+                    <Typography variant="h4" fontWeight="bold">
+                      {pendingTxns.length}
+                    </Typography>
+                  </Box>
+                </Stack>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <Card>
+              <CardContent>
+                <Stack direction="row" alignItems="center" spacing={2}>
+                  <Avatar sx={{ bgcolor: "success.light" }}>
+                    <ApprovedIcon color="success" />
+                  </Avatar>
+                  <Box>
+                    <Typography variant="body2" color="text.secondary">
+                      Total Transactions
+                    </Typography>
+                    <Typography variant="h4" fontWeight="bold">
+                      {transactions.length}
+                    </Typography>
+                  </Box>
+                </Stack>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <Card>
+              <CardContent>
+                <Stack direction="row" alignItems="center" spacing={2}>
+                  <Avatar sx={{ bgcolor: "primary.light" }}>
+                    <CommissionIcon color="primary" />
+                  </Avatar>
+                  <Box>
+                    <Typography variant="body2" color="text.secondary">
+                      Total Commission
+                    </Typography>
+                    <Typography variant="h4" fontWeight="bold">
+                      {formatCurrency(totalCommission)}
+                    </Typography>
+                  </Box>
+                </Stack>
+              </CardContent>
+            </Card>
+          </Grid>
+          <Grid item xs={12} sm={6} md={3}>
+            <Card>
+              <CardContent>
+                <Stack direction="row" alignItems="center" spacing={2}>
+                  <Avatar sx={{ bgcolor: "info.light" }}>
+                    <TodayIcon color="info" />
+                  </Avatar>
+                  <Box>
+                    <Typography variant="body2" color="text.secondary">
+                      Today's Transactions
+                    </Typography>
+                    <Typography variant="h4" fontWeight="bold">
+                      {todayTxns.length}
+                    </Typography>
+                  </Box>
+                </Stack>
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
+      </Container>
 
-          <div className="bg-white p-6 rounded-lg shadow">
-            <div className="flex items-center">
-              <div className="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold">✓</span>
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Transactions</p>
-                <p className="text-2xl font-bold text-gray-900">{transactions.length}</p>
-              </div>
-            </div>
-          </div>
+      {/* Main Content */}
+      <Container maxWidth="xl" sx={{ pb: 4 }}>
+        {/* Tabs */}
+        <Paper
+          elevation={0}
+          sx={{
+            mb: 2,
+            borderRadius: 2,
+            bgcolor: "rgba(255, 255, 255, 0.7)",
+            backdropFilter: "blur(10px)",
+          }}
+        >
+          <Tabs
+            value={activeTab}
+            onChange={(e, newValue) => setActiveTab(newValue)}
+            variant={isMobile ? "scrollable" : "standard"}
+            scrollButtons={isMobile ? "auto" : false}
+            allowScrollButtonsMobile
+            sx={{
+              "& .MuiTabs-indicator": {
+                height: 3,
+                background: "linear-gradient(45deg, #667eea 30%, #764ba2 90%)",
+              },
+            }}
+          >
+            <Tab value="pending" label="Pending" icon={<PendingIcon />} iconPosition="start" sx={{ minHeight: 64 }} />
+            <Tab value="history" label="History" icon={<HistoryIcon />} iconPosition="start" sx={{ minHeight: 64 }} />
+            <Tab value="users" label="Users" icon={<UsersIcon />} iconPosition="start" sx={{ minHeight: 64 }} />
+            <Tab
+              value="analytics"
+              label="Analytics"
+              icon={<AnalyticsIcon />}
+              iconPosition="start"
+              sx={{ minHeight: 64 }}
+            />
+          </Tabs>
+        </Paper>
 
-          <div className="bg-white p-6 rounded-lg shadow">
-            <div className="flex items-center">
-              <div className="w-10 h-10 bg-blue-500 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold">$</span>
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Commission</p>
-                <p className="text-2xl font-bold text-gray-900">{formatCurrency(totalCommission)}</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white p-6 rounded-lg shadow">
-            <div className="flex items-center">
-              <div className="w-10 h-10 bg-purple-500 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold">📊</span>
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Today's Transactions</p>
-                <p className="text-2xl font-bold text-gray-900">{todayTxns.length}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Navigation Tabs */}
-        <div className="border-b border-gray-200 mb-6">
-          <nav className="-mb-px flex space-x-8">
-            {["pending", "history", "users", "analytics"].map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`py-2 px-1 border-b-2 font-medium text-sm capitalize ${
-                  activeTab === tab
-                    ? "border-blue-500 text-blue-600"
-                    : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                }`}
-              >
-                {tab}
-              </button>
-            ))}
-          </nav>
-        </div>
-
-        {/* Pending Transactions Tab */}
-        {activeTab === "pending" && (
-          <div className="bg-white rounded-lg shadow overflow-hidden">
-            <div className="p-6 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-800">Pending Transactions ({pendingTxns.length})</h2>
-              <p className="text-sm text-gray-600 mt-1">Review and approve pending transactions below</p>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Type
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      From
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      To
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Amount
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Commission
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Date
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Action
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {pendingTxns.length > 0 ? (
-                    pendingTxns.map((txn) => (
-                      <tr key={txn.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span
-                            className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getTransactionTypeColor(
-                              txn.type
-                            )}`}
-                          >
-                            {txn.type}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{getUserName(txn.fromId)}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{getUserName(txn.toId)}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          {formatCurrency(txn.amount)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {formatCurrency(txn.commission || 0)}
-                          {txn.isInternational && <span className="ml-1 text-xs text-blue-600">(International)</span>}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {formatDate(txn.timestamp)}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <button
-                            onClick={() => handleApprove(txn)}
-                            className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium transition duration-200"
-                          >
-                            Approve
-                          </button>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan="7" className="px-6 py-8 text-center text-gray-500">
-                        <div className="flex flex-col items-center">
-                          <span className="text-4xl mb-2">✨</span>
-                          <p>No pending transactions</p>
-                        </div>
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {/* Transaction History Tab */}
-        {activeTab === "history" && (
-          <div className="bg-white rounded-lg shadow overflow-hidden">
-            <div className="p-6 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-800">Transaction History</h2>
-              <p className="text-sm text-gray-600 mt-1">All approved transactions ({approvedTxns.length} total)</p>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Type
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      From
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      To
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Amount
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Commission
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Date
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Status
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {approvedTxns.slice(0, 20).map((txn) => (
-                    <tr key={txn.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getTransactionTypeColor(
-                            txn.type
-                          )}`}
-                        >
-                          {txn.type}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{getUserName(txn.fromId)}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{getUserName(txn.toId)}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                        {formatCurrency(txn.amount)}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {formatCurrency(txn.commission || 0)}
-                        {txn.isInternational && <span className="ml-1 text-xs text-blue-600">(Int'l)</span>}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatDate(txn.timestamp)}</td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span
-                          className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(
-                            txn.status
-                          )}`}
-                        >
-                          {txn.status}
-                        </span>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {/* Users Management Tab */}
-        {activeTab === "users" && (
-          <div className="bg-white rounded-lg shadow overflow-hidden">
-            <div className="p-6 border-b border-gray-200">
-              <h2 className="text-lg font-semibold text-gray-800">User Management</h2>
-              <p className="text-sm text-gray-600 mt-1">Overview of all users and their balances</p>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      User
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      ID
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Balance
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Role
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Transactions
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {users.map((user) => {
-                    const userTxns = transactions.filter((txn) => txn.fromId === user.id || txn.toId === user.id);
-                    return (
-                      <tr key={user.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
-                              <span className="text-white font-bold text-sm">{user.name.charAt(0)}</span>
-                            </div>
-                            <div className="ml-4">
-                              <div className="text-sm font-medium text-gray-900">{user.name}</div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.id}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                          {user.balance !== undefined ? formatCurrency(user.balance) : "N/A"}
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span
-                            className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                              user.isAdmin ? "bg-red-100 text-red-800" : "bg-green-100 text-green-800"
-                            }`}
-                          >
-                            {user.isAdmin ? "Admin" : "User"}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{userTxns.length}</td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {/* Analytics Tab */}
-        {activeTab === "analytics" && (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Commission Breakdown */}
-              <div className="bg-white p-6 rounded-lg shadow">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">Commission Breakdown</h3>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Domestic Transfers (2%)</span>
-                    <span className="font-medium">
-                      {formatCurrency(
-                        approvedTxns
-                          .filter((txn) => txn.type === "transfer" && !txn.isInternational)
-                          .reduce((sum, txn) => sum + (txn.commission || 0), 0)
-                      )}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">International Transfers (10%)</span>
-                    <span className="font-medium">
-                      {formatCurrency(
-                        approvedTxns
-                          .filter((txn) => txn.type === "transfer" && txn.isInternational)
-                          .reduce((sum, txn) => sum + (txn.commission || 0), 0)
-                      )}
-                    </span>
-                  </div>
-                  <div className="border-t pt-3">
-                    <div className="flex justify-between items-center">
-                      <span className="text-sm font-medium text-gray-800">Total Commission</span>
-                      <span className="font-bold text-lg text-green-600">{formatCurrency(totalCommission)}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Monthly Summary */}
-              <div className="bg-white p-6 rounded-lg shadow">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">This Month's Summary</h3>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Total Transactions</span>
-                    <span className="font-medium">{monthlyTxns.length}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Deposits</span>
-                    <span className="font-medium">{monthlyTxns.filter((txn) => txn.type === "deposit").length}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Withdrawals</span>
-                    <span className="font-medium">{monthlyTxns.filter((txn) => txn.type === "withdraw").length}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm text-gray-600">Transfers</span>
-                    <span className="font-medium">{monthlyTxns.filter((txn) => txn.type === "transfer").length}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Transaction Volume Chart */}
-            <div className="bg-white p-6 rounded-lg shadow">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">Transaction Types Distribution</h3>
-              <div className="grid grid-cols-3 gap-4">
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                    <span className="text-2xl">💰</span>
-                  </div>
-                  <p className="text-sm text-gray-600">Deposits</p>
-                  <p className="text-lg font-bold text-green-600">
-                    {transactions.filter((txn) => txn.type === "deposit").length}
-                  </p>
-                </div>
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                    <span className="text-2xl">💸</span>
-                  </div>
-                  <p className="text-sm text-gray-600">Transfers</p>
-                  <p className="text-lg font-bold text-blue-600">
-                    {transactions.filter((txn) => txn.type === "transfer").length}
-                  </p>
-                </div>
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-2">
-                    <span className="text-2xl">🏦</span>
-                  </div>
-                  <p className="text-sm text-gray-600">Withdrawals</p>
-                  <p className="text-lg font-bold text-red-600">
-                    {transactions.filter((txn) => txn.type === "withdraw").length}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
+        {/* Tab Content */}
+        {renderTabContent()}
+      </Container>
+    </Box>
   );
 };
 
