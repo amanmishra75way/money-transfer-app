@@ -2,6 +2,10 @@ import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { login, logout } from "../redux/userSlice";
 import { useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import * as yup from "yup";
+import { useMemo } from "react";
 import {
   Box,
   Card,
@@ -33,8 +37,25 @@ import {
 } from "@mui/icons-material";
 import { motion, AnimatePresence } from "framer-motion";
 
+const loginSchema = yup.object().shape({
+  id: yup.string().required("User ID is required"),
+  password: yup.string().required("Password is required").min(6, "Password must be at least 6 characters"),
+});
+
 const Login = () => {
-  const [credentials, setCredentials] = useState({ id: "", password: "" });
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    formState: { errors },
+  } = useForm({
+    resolver: yupResolver(loginSchema),
+    defaultValues: {
+      id: "",
+      password: "",
+    },
+  });
+
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const dispatch = useDispatch();
@@ -49,25 +70,17 @@ const Login = () => {
     }
   }, [currentUser, navigate]);
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const onSubmit = (data) => {
     setIsLoading(true);
-
     setTimeout(() => {
-      dispatch(login(credentials));
+      dispatch(login(data));
       setIsLoading(false);
     }, 500);
   };
 
-  const handleChange = (e) => {
-    setCredentials({
-      ...credentials,
-      [e.target.name]: e.target.value,
-    });
-  };
-
   const quickLogin = (id, password) => {
-    setCredentials({ id, password });
+    setValue("id", id);
+    setValue("password", password);
     dispatch(login({ id, password }));
   };
 
@@ -76,11 +89,14 @@ const Login = () => {
   };
 
   // Trial users data
-  const trialUsers = [
-    { name: "Alice", id: "u1", password: "alice123", role: "User", color: "primary" },
-    { name: "Bob", id: "u2", password: "bob123", role: "User", color: "primary" },
-    { name: "Administrator", id: "admin", password: "admin123", role: "Admin", color: "success" },
-  ];
+  const trialUsers = useMemo(
+    () => [
+      { name: "Alice", id: "u1", password: "alice123", role: "User", color: "primary" },
+      { name: "Bob", id: "u2", password: "bob123", role: "User", color: "primary" },
+      { name: "Administrator", id: "admin", password: "admin123", role: "Admin", color: "success" },
+    ],
+    []
+  );
 
   if (currentUser) {
     return (
@@ -241,15 +257,15 @@ const Login = () => {
                   )}
                 </AnimatePresence>
 
-                <Box component="form" onSubmit={handleSubmit}>
+                <Box component="form" onSubmit={handleSubmit(onSubmit)}>
                   <Stack spacing={3}>
                     <motion.div whileHover={{ scale: 1.01 }}>
                       <TextField
                         fullWidth
                         label="User ID"
-                        name="id"
-                        value={credentials.id}
-                        onChange={handleChange}
+                        {...register("id")}
+                        error={!!errors.id}
+                        helperText={errors.id?.message}
                         required
                         variant="outlined"
                         InputProps={{
@@ -267,10 +283,10 @@ const Login = () => {
                       <TextField
                         fullWidth
                         label="Password"
-                        name="password"
+                        {...register("password")}
                         type={showPassword ? "text" : "password"}
-                        value={credentials.password}
-                        onChange={handleChange}
+                        error={!!errors.password}
+                        helperText={errors.password?.message}
                         required
                         variant="outlined"
                         InputProps={{

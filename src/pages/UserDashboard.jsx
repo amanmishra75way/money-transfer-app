@@ -3,6 +3,9 @@ import { useSelector, useDispatch } from "react-redux";
 import { logout } from "../redux/userSlice";
 import { requestTransaction } from "../redux/txnSlice";
 import { useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { yupResolver } from "@hookform/resolvers/yup";
+import * as yup from "yup";
 import {
   Box,
   Typography,
@@ -53,6 +56,45 @@ import {
   LocalAtm as LocalIcon,
 } from "@mui/icons-material";
 
+// Yup validation schemas
+const transferSchema = yup.object().shape({
+  recipientId: yup.string().required("Recipient is required"),
+  amount: yup
+    .number()
+    .typeError("Amount must be a number")
+    .positive("Amount must be positive")
+    .required("Amount is required")
+    .test("balance-check", "Insufficient balance including commission", function (value) {
+      if (!value) return true;
+      const currentUserData = this.options.context?.currentUserData;
+      const isInternational = this.parent.isInternational;
+      const commission = isInternational ? value * 0.1 : value * 0.02;
+      const totalAmount = value + commission;
+      return currentUserData ? totalAmount <= currentUserData.balance : false;
+    }),
+  isInternational: yup.boolean(),
+});
+
+const depositSchema = yup.object().shape({
+  amount: yup
+    .number()
+    .typeError("Amount must be a number")
+    .positive("Amount must be positive")
+    .required("Amount is required"),
+});
+
+const withdrawSchema = yup.object().shape({
+  amount: yup
+    .number()
+    .typeError("Amount must be a number")
+    .positive("Amount must be positive")
+    .required("Amount is required")
+    .test("balance-check", "Insufficient balance", function (value) {
+      const currentUserData = this.options.context?.currentUserData;
+      return currentUserData ? value <= currentUserData.balance : false;
+    }),
+});
+
 const UserDashboard = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -62,71 +104,77 @@ const UserDashboard = () => {
   const { transactions } = useSelector((state) => state.txn);
 
   const [activeTab, setActiveTab] = useState("overview");
-  const [transferForm, setTransferForm] = useState({
-    recipientId: "",
-    amount: "",
-    isInternational: false,
-  });
-  const [depositAmount, setDepositAmount] = useState("");
-  const [withdrawAmount, setWithdrawAmount] = useState("");
 
   // Get current user data from users array (to get updated balance)
   const currentUserData = users.find((u) => u.id === currentUser?.id) || currentUser;
+
+  // React Hook Form setup for each form
+  const {
+    register: registerTransfer,
+    handleSubmit: handleTransferSubmit,
+    watch: watchTransfer,
+    formState: { errors: transferErrors },
+    reset: resetTransfer,
+  } = useForm({
+    resolver: yupResolver(transferSchema),
+    context: { currentUserData }, // Pass currentUserData for balance validation
+    defaultValues: {
+      recipientId: "",
+      amount: "",
+      isInternational: false,
+    },
+  });
+  const {
+    register: registerDeposit,
+    handleSubmit: handleDepositSubmit,
+    formState: { errors: depositErrors },
+    reset: resetDeposit,
+  } = useForm({
+    resolver: yupResolver(depositSchema),
+    defaultValues: {
+      amount: "",
+    },
+  });
+
+  const {
+    register: registerWithdraw,
+    handleSubmit: handleWithdrawSubmit,
+    formState: { errors: withdrawErrors },
+    reset: resetWithdraw,
+  } = useForm({
+    resolver: yupResolver(withdrawSchema),
+    context: { currentUserData }, // Pass currentUserData for balance validation
+    defaultValues: {
+      amount: "",
+    },
+  });
+
+  const watchTransferFields = watchTransfer();
 
   // Get user's transactions
   const userTransactions = transactions.filter(
     (txn) => txn.fromId === currentUserData?.id || txn.toId === currentUserData?.id
   );
 
-  const handleTransfer = (e) => {
-    e.preventDefault();
-    const amount = parseFloat(transferForm.amount);
-
-    if (amount <= 0) {
-      alert("Please enter a valid amount!");
-      return;
-    }
-
-    const commission = transferForm.isInternational ? amount * 0.1 : amount * 0.02;
-    const totalAmount = amount + commission;
-
-    if (totalAmount > currentUserData.balance) {
-      alert(
-        `Insufficient balance! You need $${totalAmount.toFixed(2)} (Amount: $${amount.toFixed(
-          2
-        )} + Commission: $${commission.toFixed(2)})`
-      );
-      return;
-    }
-
-    const recipient = users.find((u) => u.id === transferForm.recipientId);
-    if (!recipient) {
-      alert("Invalid recipient selected!");
-      return;
-    }
+  const handleTransfer = (data) => {
+    const amount = parseFloat(data.amount);
+    const commission = data.isInternational ? amount * 0.1 : amount * 0.02;
 
     dispatch(
       requestTransaction({
         fromId: currentUserData.id,
-        toId: transferForm.recipientId,
+        toId: data.recipientId,
         amount,
         type: "transfer",
-        isInternational: transferForm.isInternational,
+        isInternational: data.isInternational,
       })
     );
 
-    setTransferForm({ recipientId: "", amount: "", isInternational: false });
+    resetTransfer();
     alert("Transfer request submitted for admin approval!");
   };
-
-  const handleDeposit = (e) => {
-    e.preventDefault();
-    const amount = parseFloat(depositAmount);
-
-    if (amount <= 0) {
-      alert("Please enter a valid amount!");
-      return;
-    }
+  const handleDeposit = (data) => {
+    const amount = parseFloat(data.amount);
 
     dispatch(
       requestTransaction({
@@ -138,23 +186,12 @@ const UserDashboard = () => {
       })
     );
 
-    setDepositAmount("");
+    resetDeposit();
     alert("Deposit request submitted for admin approval!");
   };
 
-  const handleWithdraw = (e) => {
-    e.preventDefault();
-    const amount = parseFloat(withdrawAmount);
-
-    if (amount <= 0) {
-      alert("Please enter a valid amount!");
-      return;
-    }
-
-    if (amount > currentUserData.balance) {
-      alert("Insufficient balance!");
-      return;
-    }
+  const handleWithdraw = (data) => {
+    const amount = parseFloat(data.amount);
 
     dispatch(
       requestTransaction({
@@ -166,7 +203,7 @@ const UserDashboard = () => {
       })
     );
 
-    setWithdrawAmount("");
+    resetWithdraw();
     alert("Withdrawal request submitted for admin approval!");
   };
 
@@ -342,17 +379,11 @@ const UserDashboard = () => {
                 <Typography variant="h5" gutterBottom>
                   Send Money
                 </Typography>
-                <form onSubmit={handleTransfer}>
+                <form onSubmit={handleTransferSubmit(handleTransfer)}>
                   <Stack spacing={3}>
-                    <FormControl fullWidth>
+                    <FormControl fullWidth error={!!transferErrors.recipientId}>
                       <InputLabel id="recipient-label">Recipient</InputLabel>
-                      <Select
-                        labelId="recipient-label"
-                        value={transferForm.recipientId}
-                        onChange={(e) => setTransferForm({ ...transferForm, recipientId: e.target.value })}
-                        label="Recipient"
-                        required
-                      >
+                      <Select labelId="recipient-label" label="Recipient" {...registerTransfer("recipientId")} required>
                         <MenuItem value="">Select recipient</MenuItem>
                         {users
                           .filter((u) => u.id !== currentUserData?.id && !u.isAdmin)
@@ -362,6 +393,11 @@ const UserDashboard = () => {
                             </MenuItem>
                           ))}
                       </Select>
+                      {transferErrors.recipientId && (
+                        <Typography variant="caption" color="error">
+                          {transferErrors.recipientId.message}
+                        </Typography>
+                      )}
                     </FormControl>
 
                     <TextField
@@ -369,18 +405,14 @@ const UserDashboard = () => {
                       label="Amount"
                       type="number"
                       inputProps={{ step: "0.01", min: "0.01" }}
-                      value={transferForm.amount}
-                      onChange={(e) => setTransferForm({ ...transferForm, amount: e.target.value })}
+                      {...registerTransfer("amount")}
+                      error={!!transferErrors.amount}
+                      helperText={transferErrors.amount?.message}
                       required
                     />
 
                     <FormControlLabel
-                      control={
-                        <Checkbox
-                          checked={transferForm.isInternational}
-                          onChange={(e) => setTransferForm({ ...transferForm, isInternational: e.target.checked })}
-                        />
-                      }
+                      control={<Checkbox {...registerTransfer("isInternational")} />}
                       label={
                         <Stack direction="row" alignItems="center" spacing={1}>
                           <Typography>International Transfer</Typography>
@@ -390,21 +422,28 @@ const UserDashboard = () => {
                       }
                     />
 
-                    {transferForm.amount && (
+                    {watchTransferFields.amount && (
                       <Paper elevation={0} sx={{ p: 2, bgcolor: "grey.100" }}>
                         <Stack spacing={1}>
                           <Typography variant="body2">
-                            Commission ({transferForm.isInternational ? "10%" : "2%"}):{" "}
+                            Commission ({watchTransferFields.isInternational ? "10%" : "2%"}):{" "}
                             {formatCurrency(
-                              parseFloat(transferForm.amount || 0) * (transferForm.isInternational ? 0.1 : 0.02)
+                              parseFloat(watchTransferFields.amount || 0) *
+                                (watchTransferFields.isInternational ? 0.1 : 0.02)
                             )}
                           </Typography>
                           <Typography variant="body1" fontWeight="bold">
                             Total:{" "}
                             {formatCurrency(
-                              parseFloat(transferForm.amount || 0) * (1 + (transferForm.isInternational ? 0.1 : 0.02))
+                              parseFloat(watchTransferFields.amount || 0) *
+                                (1 + (watchTransferFields.isInternational ? 0.1 : 0.02))
                             )}
                           </Typography>
+                          {transferErrors.amount?.type === "balance-check" && (
+                            <Typography variant="body2" color="error">
+                              {transferErrors.amount.message}
+                            </Typography>
+                          )}
                         </Stack>
                       </Paper>
                     )}
@@ -446,15 +485,16 @@ const UserDashboard = () => {
                 <Alert severity="info" icon={<PendingIcon />} sx={{ mb: 3 }}>
                   Deposit requests require admin approval before funds are added to your account.
                 </Alert>
-                <form onSubmit={handleDeposit}>
+                <form onSubmit={handleDepositSubmit(handleDeposit)}>
                   <Stack spacing={3}>
                     <TextField
                       fullWidth
                       label="Amount"
                       type="number"
                       inputProps={{ step: "0.01", min: "0.01" }}
-                      value={depositAmount}
-                      onChange={(e) => setDepositAmount(e.target.value)}
+                      {...registerDeposit("amount")}
+                      error={!!depositErrors.amount}
+                      helperText={depositErrors.amount?.message}
                       required
                     />
 
@@ -489,7 +529,7 @@ const UserDashboard = () => {
                 <Alert severity="info" icon={<PendingIcon />} sx={{ mb: 3 }}>
                   Withdrawal requests require admin approval before funds are deducted from your account.
                 </Alert>
-                <form onSubmit={handleWithdraw}>
+                <form onSubmit={handleWithdrawSubmit(handleWithdraw)}>
                   <Stack spacing={3}>
                     <TextField
                       fullWidth
@@ -498,10 +538,10 @@ const UserDashboard = () => {
                       inputProps={{
                         step: "0.01",
                         min: "0.01",
-                        max: currentUserData?.balance,
                       }}
-                      value={withdrawAmount}
-                      onChange={(e) => setWithdrawAmount(e.target.value)}
+                      {...registerWithdraw("amount")}
+                      error={!!withdrawErrors.amount}
+                      helperText={withdrawErrors.amount?.message}
                       required
                     />
 
