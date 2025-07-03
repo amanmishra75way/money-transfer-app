@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
+import { useMemo } from "react";
 import {
   Box,
   Typography,
@@ -106,7 +107,9 @@ const UserDashboard = () => {
   const [activeTab, setActiveTab] = useState("overview");
 
   // Get current user data from users array (to get updated balance)
-  const currentUserData = users.find((u) => u.id === currentUser?.id) || currentUser;
+  const currentUserData = useMemo(() => {
+    return users.find((u) => u.id === currentUser?.id) || currentUser;
+  }, [users, currentUser]);
 
   // React Hook Form setup for each form
   const {
@@ -152,9 +155,9 @@ const UserDashboard = () => {
   const watchTransferFields = watchTransfer();
 
   // Get user's transactions
-  const userTransactions = transactions.filter(
-    (txn) => txn.fromId === currentUserData?.id || txn.toId === currentUserData?.id
-  );
+  const userTransactions = useMemo(() => {
+    return transactions.filter((txn) => txn.fromId === currentUserData?.id || txn.toId === currentUserData?.id);
+  }, [transactions, currentUserData?.id]);
 
   const handleTransfer = (data) => {
     const amount = parseFloat(data.amount);
@@ -217,13 +220,21 @@ const UserDashboard = () => {
   const formatDate = (dateString) => new Date(dateString).toLocaleDateString();
 
   // Calculate stats
-  const approvedTransactions = userTransactions.filter((txn) => txn.status === "approved");
-  const pendingTransactions = userTransactions.filter((txn) => txn.status === "pending");
-  const thisMonthTransactions = userTransactions.filter(
-    (txn) =>
-      new Date(txn.timestamp).getMonth() === new Date().getMonth() &&
-      new Date(txn.timestamp).getFullYear() === new Date().getFullYear()
-  );
+  const approvedTransactions = useMemo(() => {
+    return userTransactions.filter((txn) => txn.status === "approved");
+  }, [userTransactions]);
+
+  const pendingTransactions = useMemo(() => {
+    return userTransactions.filter((txn) => txn.status === "pending");
+  }, [userTransactions]);
+
+  const thisMonthTransactions = useMemo(() => {
+    const now = new Date();
+    return userTransactions.filter((txn) => {
+      const txnDate = new Date(txn.timestamp);
+      return txnDate.getMonth() === now.getMonth() && txnDate.getFullYear() === now.getFullYear();
+    });
+  }, [userTransactions]);
 
   const renderTabContent = () => {
     switch (activeTab) {
