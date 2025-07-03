@@ -5,10 +5,21 @@ import App from "./App.jsx";
 import { Provider } from "react-redux";
 import { store } from "./redux/store.jsx";
 import { BrowserRouter } from "react-router-dom";
+import ErrorBoundary from "./Components/ErrorBoundary.jsx";
+
+import { ThemeProvider, CssBaseline } from "@mui/material";
+import theme from "./theme.jsx";
 createRoot(document.getElementById("root")).render(
-  <Provider store={store}>
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
-  </Provider>
+  <StrictMode>
+    <Provider store={store}>
+      <BrowserRouter>
+        <ThemeProvider theme={theme}>
+          <CssBaseline />
+          <ErrorBoundary>
+            <App />
+          </ErrorBoundary>
+        </ThemeProvider>
+      </BrowserRouter>
+    </Provider>
+  </StrictMode>
 );

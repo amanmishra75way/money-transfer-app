@@ -54,6 +54,7 @@ import {
   Today as TodayIcon,
   Receipt as TransactionsIcon,
 } from "@mui/icons-material";
+import ErrorMaker from "../Components/ErrorMaker";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();

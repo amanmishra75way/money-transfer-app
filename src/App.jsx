@@ -4,6 +4,7 @@ import ProtectedRoute from "./config/ProtectedRoute";
 import Loader from "./Components/Loader";
 
 import Login from "./pages/Login";
+import ErrorMaker from "./Components/ErrorMaker";
 
 const UserDashboard = lazy(() => import("./pages/UserDashboard"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
@@ -14,6 +15,7 @@ const AdminLayouts = lazy(() => import("./layouts/AdminLayouts"));
 const App = () => {
   return (
     <Suspense fallback={<Loader />}>
+      {/* <ErrorMaker /> */}
       <Routes>
         <Route path="/" element={<Login />} />
 

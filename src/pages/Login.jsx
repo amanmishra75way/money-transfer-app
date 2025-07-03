@@ -14,18 +14,11 @@ import {
   Container,
   Avatar,
   Chip,
-  Divider,
   Stack,
   IconButton,
+  Paper,
   useTheme,
   useMediaQuery,
-  Paper,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemAvatar,
-  Fade,
-  Grow,
 } from "@mui/material";
 import {
   Lock as LockIcon,
@@ -38,6 +31,7 @@ import {
   VisibilityOff,
   Login as LoginIcon,
 } from "@mui/icons-material";
+import { motion, AnimatePresence } from "framer-motion";
 
 const Login = () => {
   const [credentials, setCredentials] = useState({ id: "", password: "" });
@@ -91,14 +85,14 @@ const Login = () => {
   if (currentUser) {
     return (
       <Container maxWidth="sm" sx={{ minHeight: "100vh", display: "flex", alignItems: "center", py: 3 }}>
-        <Grow in timeout={800}>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
           <Card
             elevation={8}
             sx={{
               width: "100%",
-              borderRadius: 3,
-              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-              color: "white",
+              borderRadius: theme.shape.borderRadius * 3,
+              background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
+              color: theme.palette.primary.contrastText,
             }}
           >
             <CardContent sx={{ p: 4, textAlign: "center" }}>
@@ -126,46 +120,50 @@ const Login = () => {
               />
 
               <Stack spacing={2}>
-                <Button
-                  variant="contained"
-                  size="large"
-                  startIcon={<DashboardIcon />}
-                  onClick={() => navigate(currentUser.isAdmin ? "/admin" : "/dashboard")}
-                  sx={{
-                    bgcolor: "rgba(255,255,255,0.2)",
-                    backdropFilter: "blur(10px)",
-                    "&:hover": {
-                      bgcolor: "rgba(255,255,255,0.3)",
-                    },
-                    borderRadius: 2,
-                    py: 1.5,
-                  }}
-                >
-                  Go to Dashboard
-                </Button>
+                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                  <Button
+                    variant="contained"
+                    size="large"
+                    startIcon={<DashboardIcon />}
+                    onClick={() => navigate(currentUser.isAdmin ? "/admin" : "/dashboard")}
+                    sx={{
+                      bgcolor: "rgba(255,255,255,0.2)",
+                      backdropFilter: "blur(10px)",
+                      "&:hover": {
+                        bgcolor: "rgba(255,255,255,0.3)",
+                      },
+                      borderRadius: theme.shape.borderRadius * 2,
+                      py: 1.5,
+                    }}
+                  >
+                    Go to Dashboard
+                  </Button>
+                </motion.div>
 
-                <Button
-                  variant="outlined"
-                  size="large"
-                  startIcon={<LogoutIcon />}
-                  onClick={() => dispatch(logout())}
-                  sx={{
-                    borderColor: "rgba(255,255,255,0.5)",
-                    color: "white",
-                    "&:hover": {
-                      borderColor: "rgba(255,255,255,0.8)",
-                      bgcolor: "rgba(255,255,255,0.1)",
-                    },
-                    borderRadius: 2,
-                    py: 1.5,
-                  }}
-                >
-                  Logout
-                </Button>
+                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                  <Button
+                    variant="outlined"
+                    size="large"
+                    startIcon={<LogoutIcon />}
+                    onClick={() => dispatch(logout())}
+                    sx={{
+                      borderColor: "rgba(255,255,255,0.5)",
+                      color: "white",
+                      "&:hover": {
+                        borderColor: "rgba(255,255,255,0.8)",
+                        bgcolor: "rgba(255,255,255,0.1)",
+                      },
+                      borderRadius: theme.shape.borderRadius * 2,
+                      py: 1.5,
+                    }}
+                  >
+                    Logout
+                  </Button>
+                </motion.div>
               </Stack>
             </CardContent>
           </Card>
-        </Grow>
+        </motion.div>
       </Container>
     );
   }
@@ -174,21 +172,21 @@ const Login = () => {
     <Box
       sx={{
         minHeight: "100vh",
-        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+        background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
         display: "flex",
         alignItems: "center",
         py: 3,
       }}
     >
       <Container maxWidth="md">
-        <Fade in timeout={1000}>
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
           <Card
             elevation={12}
             sx={{
-              borderRadius: 4,
+              borderRadius: theme.shape.borderRadius * 3,
               overflow: "hidden",
               backdropFilter: "blur(10px)",
-              backgroundColor: "rgba(255, 255, 255, 0.95)",
+              backgroundColor: theme.palette.background.paper,
             }}
           >
             <Box
@@ -201,17 +199,19 @@ const Login = () => {
               {/* Left Panel - Login Form */}
               <Box sx={{ flex: 1, p: { xs: 3, sm: 4, md: 5 } }}>
                 <Box sx={{ textAlign: "center", mb: 4 }}>
-                  <Avatar
-                    sx={{
-                      width: 64,
-                      height: 64,
-                      mx: "auto",
-                      mb: 2,
-                      bgcolor: "primary.main",
-                    }}
-                  >
-                    <LockIcon sx={{ fontSize: 32 }} />
-                  </Avatar>
+                  <motion.div whileHover={{ rotate: 5, scale: 1.05 }}>
+                    <Avatar
+                      sx={{
+                        width: 64,
+                        height: 64,
+                        mx: "auto",
+                        mb: 2,
+                        bgcolor: theme.palette.primary.main,
+                      }}
+                    >
+                      <LockIcon sx={{ fontSize: 32 }} />
+                    </Avatar>
+                  </motion.div>
 
                   <Typography variant="h4" fontWeight="bold" gutterBottom>
                     MoneyTransfer
@@ -222,77 +222,94 @@ const Login = () => {
                   </Typography>
                 </Box>
 
-                {error && (
-                  <Fade in>
-                    <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }} icon={<LockIcon />}>
-                      {error}
-                    </Alert>
-                  </Fade>
-                )}
+                <AnimatePresence>
+                  {error && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      <Alert
+                        severity="error"
+                        sx={{ mb: 3, borderRadius: theme.shape.borderRadius }}
+                        icon={<LockIcon />}
+                      >
+                        {error}
+                      </Alert>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
 
                 <Box component="form" onSubmit={handleSubmit}>
                   <Stack spacing={3}>
-                    <TextField
-                      fullWidth
-                      label="User ID"
-                      name="id"
-                      value={credentials.id}
-                      onChange={handleChange}
-                      required
-                      variant="outlined"
-                      InputProps={{
-                        startAdornment: <AccountCircleIcon sx={{ color: "action.active", mr: 1 }} />,
-                      }}
-                      sx={{
-                        "& .MuiOutlinedInput-root": {
-                          borderRadius: 2,
-                        },
-                      }}
-                    />
+                    <motion.div whileHover={{ scale: 1.01 }}>
+                      <TextField
+                        fullWidth
+                        label="User ID"
+                        name="id"
+                        value={credentials.id}
+                        onChange={handleChange}
+                        required
+                        variant="outlined"
+                        InputProps={{
+                          startAdornment: <AccountCircleIcon sx={{ color: "action.active", mr: 1 }} />,
+                        }}
+                        sx={{
+                          "& .MuiOutlinedInput-root": {
+                            borderRadius: theme.shape.borderRadius,
+                          },
+                        }}
+                      />
+                    </motion.div>
 
-                    <TextField
-                      fullWidth
-                      label="Password"
-                      name="password"
-                      type={showPassword ? "text" : "password"}
-                      value={credentials.password}
-                      onChange={handleChange}
-                      required
-                      variant="outlined"
-                      InputProps={{
-                        startAdornment: <LockIcon sx={{ color: "action.active", mr: 1 }} />,
-                        endAdornment: (
-                          <IconButton onClick={togglePasswordVisibility} edge="end" size="small">
-                            {showPassword ? <VisibilityOff /> : <Visibility />}
-                          </IconButton>
-                        ),
-                      }}
-                      sx={{
-                        "& .MuiOutlinedInput-root": {
-                          borderRadius: 2,
-                        },
-                      }}
-                    />
+                    <motion.div whileHover={{ scale: 1.01 }}>
+                      <TextField
+                        fullWidth
+                        label="Password"
+                        name="password"
+                        type={showPassword ? "text" : "password"}
+                        value={credentials.password}
+                        onChange={handleChange}
+                        required
+                        variant="outlined"
+                        InputProps={{
+                          startAdornment: <LockIcon sx={{ color: "action.active", mr: 1 }} />,
+                          endAdornment: (
+                            <IconButton onClick={togglePasswordVisibility} edge="end" size="small">
+                              {showPassword ? <VisibilityOff /> : <Visibility />}
+                            </IconButton>
+                          ),
+                        }}
+                        sx={{
+                          "& .MuiOutlinedInput-root": {
+                            borderRadius: theme.shape.borderRadius,
+                          },
+                        }}
+                      />
+                    </motion.div>
 
-                    <Button
-                      type="submit"
-                      fullWidth
-                      variant="contained"
-                      size="large"
-                      disabled={isLoading}
-                      startIcon={isLoading ? <CircularProgress size={20} color="inherit" /> : <LoginIcon />}
-                      sx={{
-                        py: 1.5,
-                        borderRadius: 2,
-                        background: "linear-gradient(45deg, #667eea 30%, #764ba2 90%)",
-                        boxShadow: "0 3px 5px 2px rgba(102, 126, 234, .3)",
-                        "&:hover": {
-                          background: "linear-gradient(45deg, #5a67d8 30%, #6b46c1 90%)",
-                        },
-                      }}
-                    >
-                      {isLoading ? "Signing In..." : "Sign In"}
-                    </Button>
+                    <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
+                      <Button
+                        type="submit"
+                        fullWidth
+                        variant="contained"
+                        size="large"
+                        disabled={isLoading}
+                        startIcon={isLoading ? <CircularProgress size={20} color="inherit" /> : <LoginIcon />}
+                        sx={{
+                          py: 1.5,
+                          borderRadius: theme.shape.borderRadius,
+                          background: `linear-gradient(45deg, ${theme.palette.primary.main} 30%, ${theme.palette.secondary.main} 90%)`,
+                          boxShadow: theme.shadows[3],
+                          "&:hover": {
+                            background: `linear-gradient(45deg, ${theme.palette.primary.dark} 30%, ${theme.palette.secondary.dark} 90%)`,
+                          },
+                        }}
+                      >
+                        {isLoading ? "Signing In..." : "Sign In"}
+                      </Button>
+                    </motion.div>
                   </Stack>
                 </Box>
               </Box>
@@ -301,7 +318,7 @@ const Login = () => {
               <Box
                 sx={{
                   flex: { md: 0.8 },
-                  bgcolor: "grey.50",
+                  bgcolor: theme.palette.grey[50],
                   p: { xs: 3, sm: 4, md: 5 },
                   borderLeft: { md: "1px solid" },
                   borderTop: { xs: "1px solid", md: "none" },
@@ -318,68 +335,70 @@ const Login = () => {
 
                 <Stack spacing={2}>
                   {trialUsers.map((user, index) => (
-                    <Paper
-                      key={index}
-                      elevation={2}
-                      sx={{
-                        p: 2,
-                        borderRadius: 2,
-                        cursor: "pointer",
-                        transition: "all 0.2s ease-in-out",
-                        "&:hover": {
-                          elevation: 4,
-                          transform: "translateY(-2px)",
-                          bgcolor: "primary.50",
-                        },
-                      }}
-                      onClick={() => quickLogin(user.id, user.password)}
-                    >
-                      <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
-                        <Avatar
-                          sx={{
-                            width: 32,
-                            height: 32,
-                            mr: 2,
-                            bgcolor: user.role === "Admin" ? "success.main" : "primary.main",
-                          }}
-                        >
-                          {user.role === "Admin" ? <AdminIcon /> : <PersonIcon />}
-                        </Avatar>
+                    <motion.div key={index} whileHover={{ y: -4 }} whileTap={{ scale: 0.98 }}>
+                      <Paper
+                        elevation={2}
+                        sx={{
+                          p: 2,
+                          borderRadius: theme.shape.borderRadius * 2,
+                          cursor: "pointer",
+                          transition: theme.transitions.create(["box-shadow", "transform"], {
+                            duration: theme.transitions.duration.short,
+                          }),
+                          "&:hover": {
+                            boxShadow: theme.shadows[4],
+                            bgcolor: theme.palette.primary.light + "08",
+                          },
+                        }}
+                        onClick={() => quickLogin(user.id, user.password)}
+                      >
+                        <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+                          <Avatar
+                            sx={{
+                              width: 32,
+                              height: 32,
+                              mr: 2,
+                              bgcolor: user.role === "Admin" ? theme.palette.success.main : theme.palette.primary.main,
+                            }}
+                          >
+                            {user.role === "Admin" ? <AdminIcon /> : <PersonIcon />}
+                          </Avatar>
 
-                        <Box sx={{ flex: 1 }}>
-                          <Typography variant="subtitle1" fontWeight="bold">
-                            {user.name}
-                          </Typography>
-                          <Chip
-                            label={user.role}
-                            size="small"
-                            color={user.role === "Admin" ? "success" : "primary"}
-                            sx={{ mt: 0.5 }}
-                          />
+                          <Box sx={{ flex: 1 }}>
+                            <Typography variant="subtitle1" fontWeight="bold">
+                              {user.name}
+                            </Typography>
+                            <Chip
+                              label={user.role}
+                              size="small"
+                              color={user.role === "Admin" ? "success" : "primary"}
+                              sx={{ mt: 0.5 }}
+                            />
+                          </Box>
                         </Box>
-                      </Box>
 
-                      <Box sx={{ pl: 6 }}>
-                        <Typography variant="body2" color="text.secondary">
-                          ID:{" "}
-                          <Box component="span" sx={{ fontFamily: "monospace", fontWeight: "bold" }}>
-                            {user.id}
-                          </Box>
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          Password:{" "}
-                          <Box component="span" sx={{ fontFamily: "monospace", fontWeight: "bold" }}>
-                            {user.password}
-                          </Box>
-                        </Typography>
-                      </Box>
-                    </Paper>
+                        <Box sx={{ pl: 6 }}>
+                          <Typography variant="body2" color="text.secondary">
+                            ID:{" "}
+                            <Box component="span" sx={{ fontFamily: "monospace", fontWeight: "bold" }}>
+                              {user.id}
+                            </Box>
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            Password:{" "}
+                            <Box component="span" sx={{ fontFamily: "monospace", fontWeight: "bold" }}>
+                              {user.password}
+                            </Box>
+                          </Typography>
+                        </Box>
+                      </Paper>
+                    </motion.div>
                   ))}
                 </Stack>
               </Box>
             </Box>
           </Card>
-        </Fade>
+        </motion.div>
       </Container>
     </Box>
   );

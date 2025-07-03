@@ -4,11 +4,11 @@ import { Box, Typography, Button, Container } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { useNavigate } from "react-router-dom";
 
-const NotFound = () => {
+const SomethingWentWrong = () => {
   const navigate = useNavigate();
 
   const handleGoBack = () => {
-    navigate(-1); // or navigate('/') to go home
+    navigate(-1);
   };
 
   return (
@@ -18,38 +18,32 @@ const NotFound = () => {
         justifyContent: "center",
         alignItems: "center",
         minHeight: "100vh",
-        backgroundColor: "#fff5f5",
+        backgroundColor: "#f7fafc", // Light background
         textAlign: "center",
         p: 3,
       }}
     >
       <Container maxWidth="sm">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5 }}
-        >
-          <Typography variant="h1" sx={{ fontSize: { xs: "5rem", md: "8rem" }, color: "#e53e3e" }}>
-            404
+        <motion.div initial={{ opacity: 0, y: -50 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+          <Typography variant="h1" sx={{ fontSize: { xs: "4rem", md: "6rem" }, color: "#4299e1" }}>
+            Oops!
           </Typography>
         </motion.div>
-
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 50 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
         >
           <Typography variant="h4" sx={{ color: "#2d3748", mt: 2 }}>
-            Page Not Found
+            Something Went Wrong
           </Typography>
           <Typography variant="body1" sx={{ color: "#4a5568", mt: 2 }}>
-            The page you're looking for doesn't exist or has been moved.
+            We apologize, but an unexpected error has occurred. Please try again later.
           </Typography>
         </motion.div>
-
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5, delay: 0.4 }}
         >
           <Button
@@ -62,11 +56,11 @@ const NotFound = () => {
               px: 4,
               py: 1.5,
               borderRadius: 2,
-              borderColor: "#e53e3e",
-              color: "#e53e3e",
+              borderColor: "#667eea",
+              color: "#667eea",
               "&:hover": {
-                borderColor: "#c53030",
-                backgroundColor: "rgba(229, 62, 62, 0.1)",
+                borderColor: "#5a67d8",
+                backgroundColor: "rgba(102, 126, 234, 0.1)",
                 transform: "translateY(-2px)",
               },
               transition: "all 0.3s ease",
@@ -80,4 +74,4 @@ const NotFound = () => {
   );
 };
 
-export default NotFound;
+export default SomethingWentWrong;
