@@ -1,38 +1,52 @@
 import jwt from "jsonwebtoken";
 import User from "../../users/user-models.js";
 
-export const protect = async (req, res, next) => {
+const authMiddleware = async (req, res, next) => {
   let token;
 
-  // 1. Try to get token from Authorization header
-  if (req.headers.authorization?.startsWith("Bearer")) {
+  // 1. Check Authorization header
+  if (req.headers.authorization && req.headers.authorization.startsWith("Bearer ")) {
     token = req.headers.authorization.split(" ")[1];
   }
 
-  // 2. Else try from cookie
+  // 2. Fallback to accessToken cookie
   if (!token && req.cookies?.accessToken) {
     token = req.cookies.accessToken;
   }
 
   if (!token) {
-    return res.status(401).json({ success: false, message: "Not authorized, no token" });
+    return res.status(401).json({
+      success: false,
+      message: "Not authorized, token missing",
+    });
   }
 
   try {
-    jwt.verify(token, process.env.JWT_SECRET, async (err, decoded) => {
-      if (err) {
-        return res.status(401).json({ success: false, message: "Not authorized, token failed" });
-      }
+    const decoded = jwt.verify(token, process.env.ACCESS_SECRET);
 
-      const user = await User.findById(decoded.userId).select("-password");
-      if (!user) {
-        return res.status(401).json({ success: false, message: "Not authorized, user not found" });
-      }
+    const user = await User.findById(decoded.sub).select("-passwordHash -refreshToken");
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: "User not found",
+      });
+    }
 
-      req.user = user;
-      next();
+    // Attach clean user info
+    req.user = {
+      id: user._id,
+      userId: user.userId,
+      name: user.name,
+      isAdmin: user.isAdmin,
+    };
+
+    next();
+  } catch (err) {
+    res.status(401).json({
+      success: false,
+      message: "Token invalid or expired",
     });
-  } catch (error) {
-    res.status(500).json({ success: false, message: "Internal server error", error: error.message });
   }
 };
+
+export default authMiddleware;

@@ -77,6 +77,7 @@ const userSlice = createSlice({
   initialState: {
     currentUser: null,
     error: null,
+    isLoadingAuth: false, // Initial state assumes not loading until check is initiated
     users: [], // optional: filled from somewhere else
   },
   reducers: {},
@@ -84,24 +85,37 @@ const userSlice = createSlice({
     builder
       .addCase(login.fulfilled, (state, action) => {
         state.currentUser = action.payload;
-        state.error = null;
+        state.error = null; // Clear any previous errors
+        state.isLoadingAuth = false; // Set loading to false on success
       })
       .addCase(login.rejected, (state, action) => {
         state.currentUser = null;
-        state.error = action.payload;
+        state.error = action.payload; // Set the error message
+        state.isLoadingAuth = false; // Set loading to false on failure
+      })
+      .addCase(login.pending, (state) => {
+        state.isLoadingAuth = true; // Set loading to true while logging in
       })
       .addCase(logoutUser.fulfilled, (state) => {
         state.currentUser = null;
         state.error = null;
+        state.isLoadingAuth = false; // Set loading to false on logout
+      })
+      .addCase(fetchCurrentUser.pending, (state) => {
+        state.isLoadingAuth = true; // Set loading to true while fetching
+      })
+      .addCase(logoutUser.rejected, (state, action) => {
+        state.error = action.payload;
+        state.isLoadingAuth = false; // Set loading to false on logout failure
       })
       .addCase(fetchCurrentUser.fulfilled, (state, action) => {
         state.currentUser = action.payload;
-        state.error = null;
+        state.isLoadingAuth = false; // Set loading to false on success
+        state.error = null; // Clear any previous errors
       })
-
       .addCase(fetchCurrentUser.rejected, (state, action) => {
         state.currentUser = null;
-        state.error = action.payload;
+        state.error = action.payload; // Set the error message
       });
   },
 });
