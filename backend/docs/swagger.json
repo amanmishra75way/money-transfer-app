@@ -18,11 +18,26 @@
                 "type": "object",
                 "required": ["userId", "name", "password"],
                 "properties": {
-                  "userId": { "type": "string", "example": "john123" },
-                  "name": { "type": "string", "example": "John Doe" },
-                  "password": { "type": "string", "example": "password123" },
-                  "balance": { "type": "number", "example": 1000 },
-                  "isAdmin": { "type": "boolean", "example": false }
+                  "userId": {
+                    "type": "string",
+                    "example": "john123"
+                  },
+                  "name": {
+                    "type": "string",
+                    "example": "John Doe"
+                  },
+                  "password": {
+                    "type": "string",
+                    "example": "password123"
+                  },
+                  "balance": {
+                    "type": "number",
+                    "example": 1000
+                  },
+                  "isAdmin": {
+                    "type": "boolean",
+                    "example": false
+                  }
                 }
               }
             }
@@ -36,15 +51,27 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "success": { "type": "boolean" },
-                    "message": { "type": "string" },
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
                     "user": {
                       "type": "object",
                       "properties": {
-                        "userId": { "type": "string" },
-                        "name": { "type": "string" },
-                        "balance": { "type": "number" },
-                        "isAdmin": { "type": "boolean" }
+                        "userId": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "balance": {
+                          "type": "number"
+                        },
+                        "isAdmin": {
+                          "type": "boolean"
+                        }
                       }
                     }
                   }
@@ -52,9 +79,15 @@
               }
             }
           },
-          "400": { "description": "Missing required fields" },
-          "409": { "description": "User already exists" },
-          "500": { "description": "Internal server error" }
+          "400": {
+            "description": "Missing required fields"
+          },
+          "409": {
+            "description": "User already exists"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
         }
       }
     },
@@ -70,8 +103,14 @@
                 "type": "object",
                 "required": ["userId", "password"],
                 "properties": {
-                  "userId": { "type": "string", "example": "john123" },
-                  "password": { "type": "string", "example": "password123" }
+                  "userId": {
+                    "type": "string",
+                    "example": "john123"
+                  },
+                  "password": {
+                    "type": "string",
+                    "example": "password123"
+                  }
                 }
               }
             }
@@ -85,26 +124,46 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "success": { "type": "boolean" },
-                    "message": { "type": "string" },
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
                     "user": {
                       "type": "object",
                       "properties": {
-                        "userId": { "type": "string" },
-                        "name": { "type": "string" },
-                        "balance": { "type": "number" },
-                        "isAdmin": { "type": "boolean" }
+                        "userId": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "balance": {
+                          "type": "number"
+                        },
+                        "isAdmin": {
+                          "type": "boolean"
+                        }
                       }
                     },
-                    "accessToken": { "type": "string" },
-                    "refreshToken": { "type": "string" }
+                    "accessToken": {
+                      "type": "string"
+                    },
+                    "refreshToken": {
+                      "type": "string"
+                    }
                   }
                 }
               }
             }
           },
-          "401": { "description": "Invalid credentials or user not found" },
-          "500": { "description": "Internal server error" }
+          "401": {
+            "description": "Invalid credentials or user not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
         }
       }
     },
@@ -137,14 +196,20 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "accessToken": { "type": "string" }
+                    "accessToken": {
+                      "type": "string"
+                    }
                   }
                 }
               }
             }
           },
-          "401": { "description": "Refresh token missing" },
-          "403": { "description": "Invalid or expired refresh token" }
+          "401": {
+            "description": "Refresh token missing"
+          },
+          "403": {
+            "description": "Invalid or expired refresh token"
+          }
         }
       }
     },
@@ -177,15 +242,23 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "success": { "type": "boolean" },
-                    "message": { "type": "string" }
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
                   }
                 }
               }
             }
           },
-          "400": { "description": "Refresh token missing" },
-          "404": { "description": "User not found" }
+          "400": {
+            "description": "Refresh token missing"
+          },
+          "404": {
+            "description": "User not found"
+          }
         }
       }
     },
@@ -193,7 +266,11 @@
       "get": {
         "summary": "Get current logged-in user",
         "tags": ["Users"],
-        "security": [{ "bearerAuth": [] }],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "User data retrieved",
@@ -202,15 +279,27 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "success": { "type": "boolean" },
+                    "success": {
+                      "type": "boolean"
+                    },
                     "user": {
                       "type": "object",
                       "properties": {
-                        "_id": { "type": "string" },
-                        "userId": { "type": "string" },
-                        "name": { "type": "string" },
-                        "balance": { "type": "number" },
-                        "isAdmin": { "type": "boolean" }
+                        "_id": {
+                          "type": "string"
+                        },
+                        "userId": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "balance": {
+                          "type": "number"
+                        },
+                        "isAdmin": {
+                          "type": "boolean"
+                        }
                       }
                     }
                   }
@@ -218,8 +307,176 @@
               }
             }
           },
-          "404": { "description": "User not found" },
-          "500": { "description": "Internal server error" }
+          "404": {
+            "description": "User not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/api/transactions": {
+      "post": {
+        "summary": "Request a transaction (transfer, deposit, withdraw)",
+        "tags": ["Transactions"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["fromUser", "toUser", "amount", "type"],
+                "properties": {
+                  "fromUser": {
+                    "type": "string",
+                    "example": "u1"
+                  },
+                  "toUser": {
+                    "type": "string",
+                    "example": "u2"
+                  },
+                  "amount": {
+                    "type": "number",
+                    "example": 500
+                  },
+                  "type": {
+                    "type": "string",
+                    "enum": ["transfer", "deposit", "withdraw"],
+                    "example": "transfer"
+                  },
+                  "isInternational": {
+                    "type": "boolean",
+                    "example": false
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Transaction created and pending approval",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Transaction"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      },
+      "get": {
+        "summary": "Get current user's transactions",
+        "tags": ["Transactions"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of user transactions",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Transaction"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Failed to fetch transactions"
+          }
+        }
+      }
+    },
+    "/api/transactions/all": {
+      "get": {
+        "summary": "Get all transactions (admin only)",
+        "tags": ["Transactions"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "All transactions list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Transaction"
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden (non-admin access)"
+          },
+          "500": {
+            "description": "Server error"
+          }
+        }
+      }
+    },
+    "/api/transactions/{id}/approve": {
+      "patch": {
+        "summary": "Approve a transaction (admin only)",
+        "tags": ["Transactions"],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Transaction approved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Transaction approved successfully"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid transaction or already approved"
+          },
+          "500": {
+            "description": "Server error"
+          }
         }
       }
     }
@@ -230,6 +487,50 @@
         "type": "http",
         "scheme": "bearer",
         "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "Transaction": {
+        "type": "object",
+        "properties": {
+          "_id": {
+            "type": "string"
+          },
+          "fromUser": {
+            "type": "string",
+            "example": "u1"
+          },
+          "toUser": {
+            "type": "string",
+            "example": "u2"
+          },
+          "amount": {
+            "type": "number",
+            "example": 500
+          },
+          "type": {
+            "type": "string",
+            "enum": ["transfer", "deposit", "withdraw"],
+            "example": "transfer"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["pending", "approved"],
+            "example": "pending"
+          },
+          "isInternational": {
+            "type": "boolean",
+            "example": false
+          },
+          "commission": {
+            "type": "number",
+            "example": 10
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
       }
     }
   }
