@@ -6,6 +6,7 @@ const userSchema = mongoose.Schema({
   password: { type: String, required: true },
   balance: { type: Number, default: 0 },
   isAdmin: { type: Boolean, default: false },
+  refreshToken: { type: String },
 });
 
 const User = mongoose.model("User", userSchema);

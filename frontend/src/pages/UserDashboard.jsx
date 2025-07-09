@@ -1,6 +1,6 @@
 import React, { lazy, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { logout } from "../redux/userSlice";
+import { logoutUser } from "../redux/userSlice";
 import { requestTransaction } from "../redux/txnSlice";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -321,7 +321,7 @@ const UserDashboard = () => {
                 color="error"
                 startIcon={<LogoutIcon />}
                 onClick={() => {
-                  dispatch(logout());
+                  dispatch(logoutUser());
                   navigate("/");
                 }}
               >

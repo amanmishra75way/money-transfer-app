@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { login, logout } from "../redux/userSlice";
+import { login, logoutUser } from "../redux/userSlice";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
@@ -39,7 +39,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 const loginSchema = yup.object().shape({
   id: yup.string().required("User ID is required"),
-  password: yup.string().required("Password is required").min(6, "Password must be at least 6 characters"),
+  password: yup.string().required("Password is required").min(3, "Password must be at least 6 characters"),
 });
 
 const Login = () => {
@@ -70,25 +70,27 @@ const Login = () => {
     }
   }, [currentUser, navigate]);
 
-  const onSubmit = (data) => {
+  const onSubmit = async (data) => {
     setIsLoading(true);
-    setTimeout(() => {
-      dispatch(login(data));
+    try {
+      await dispatch(login({ userID: data.id, password: data.password })).unwrap();
+    } catch (err) {
+      console.error("Login failed:", err);
+    } finally {
       setIsLoading(false);
-    }, 500);
+    }
   };
 
   const quickLogin = (id, password) => {
     setValue("id", id);
     setValue("password", password);
-    dispatch(login({ id, password }));
+    dispatch(login({ userID: id, password }));
   };
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };
 
-  // Trial users data
   const trialUsers = useMemo(
     () => [
       { name: "Alice", id: "u1", password: "alice123", role: "User", color: "primary" },
@@ -161,7 +163,7 @@ const Login = () => {
                     variant="outlined"
                     size="large"
                     startIcon={<LogoutIcon />}
-                    onClick={() => dispatch(logout())}
+                    onClick={() => dispatch(logoutUser())}
                     sx={{
                       borderColor: "rgba(255,255,255,0.5)",
                       color: "white",
@@ -212,7 +214,6 @@ const Login = () => {
                 minHeight: { md: "600px" },
               }}
             >
-              {/* Left Panel - Login Form */}
               <Box sx={{ flex: 1, p: { xs: 3, sm: 4, md: 5 } }}>
                 <Box sx={{ textAlign: "center", mb: 4 }}>
                   <motion.div whileHover={{ rotate: 5, scale: 1.05 }}>
@@ -330,7 +331,6 @@ const Login = () => {
                 </Box>
               </Box>
 
-              {/* Right Panel - Trial Credentials */}
               <Box
                 sx={{
                   flex: { md: 0.8 },

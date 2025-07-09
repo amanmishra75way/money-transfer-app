@@ -11,7 +11,13 @@ connectDB();
 
 // middlewears
 app.use(express.json());
-app.use(cors());
+
+app.use(
+  cors({
+    origin: "http://localhost:5173", // React app
+    credentials: true, // <---- THIS
+  })
+);
 
 // API Endpoints
 

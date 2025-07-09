@@ -1,58 +1,109 @@
-import { createSlice } from "@reduxjs/toolkit";
+// redux/userSlice.jsx
+import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 
-const savedUsers = localStorage.getItem("users");
-const savedCurrentUser = localStorage.getItem("currentUser");
+const BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
-const initialState = {
-  users: savedUsers
-    ? JSON.parse(savedUsers)
-    : [
-        { id: "u1", name: "Alice", password: "alice123", balance: 1000, isAdmin: false },
-        { id: "u2", name: "Bob", password: "bob123", balance: 1500, isAdmin: false },
-        { id: "admin", name: "Admin", password: "admin123", balance: 0, isAdmin: true },
-      ],
-  currentUser: savedCurrentUser ? JSON.parse(savedCurrentUser) : null,
-  error: null,
-};
+// Async login thunk
+export const login = createAsyncThunk("user/login", async (credentials, thunkAPI) => {
+  try {
+    const response = await fetch(`${BASE_URL}/api/user/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include", // <- send cookies!
+      body: JSON.stringify(credentials),
+    });
+
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.message || "Login failed");
+
+    return data.user;
+  } catch (error) {
+    return thunkAPI.rejectWithValue(error.message);
+  }
+});
+
+// Async logout thunk
+export const logoutUser = createAsyncThunk("user/logout", async (_, thunkAPI) => {
+  try {
+    await fetch(`${BASE_URL}/api/user/logout`, {
+      method: "POST",
+      credentials: "include",
+    });
+    return true;
+  } catch (error) {
+    return thunkAPI.rejectWithValue(error.message);
+  }
+});
+
+export const fetchCurrentUser = createAsyncThunk("user/fetchCurrentUser", async (_, thunkAPI) => {
+  try {
+    const res = await fetch(`${BASE_URL}/api/user/me`, {
+      method: "GET",
+      credentials: "include",
+    });
+
+    if (res.status === 401) {
+      // Try to refresh token
+      const refreshRes = await fetch(`${BASE_URL}/api/user/refresh-token`, {
+        method: "POST",
+        credentials: "include",
+      });
+
+      if (!refreshRes.ok) {
+        throw new Error("Session expired");
+      }
+
+      // Retry original request
+      const retryRes = await fetch(`${BASE_URL}/api/user/me`, {
+        method: "GET",
+        credentials: "include",
+      });
+
+      const data = await retryRes.json();
+      if (!retryRes.ok) throw new Error(data.message || "Session expired");
+      return data.user;
+    }
+
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.message || "Session expired");
+    return data.user;
+  } catch (error) {
+    return thunkAPI.rejectWithValue(error.message);
+  }
+});
 
 const userSlice = createSlice({
   name: "user",
-  initialState,
-  reducers: {
-    login(state, action) {
-      const { id, password } = action.payload;
-      const user = state.users.find((u) => u.id === id && u.password === password);
-      if (user) {
-        const payload = { id: user.id, name: user.name, isAdmin: user.isAdmin };
-        state.currentUser = payload;
+  initialState: {
+    currentUser: null,
+    error: null,
+    users: [], // optional: filled from somewhere else
+  },
+  reducers: {},
+  extraReducers: (builder) => {
+    builder
+      .addCase(login.fulfilled, (state, action) => {
+        state.currentUser = action.payload;
         state.error = null;
-        localStorage.setItem("currentUser", JSON.stringify(payload));
-      } else {
-        state.error = "Invalid credentials";
-      }
-    },
+      })
+      .addCase(login.rejected, (state, action) => {
+        state.currentUser = null;
+        state.error = action.payload;
+      })
+      .addCase(logoutUser.fulfilled, (state) => {
+        state.currentUser = null;
+        state.error = null;
+      })
+      .addCase(fetchCurrentUser.fulfilled, (state, action) => {
+        state.currentUser = action.payload;
+        state.error = null;
+      })
 
-    logout(state) {
-      state.currentUser = null;
-      state.error = null;
-      localStorage.removeItem("currentUser");
-    },
-
-    updateBalance(state, action) {
-      const { userId, amount } = action.payload;
-      const user = state.users.find((u) => u.id === userId);
-      if (user) {
-        user.balance = (user.balance || 0) + amount;
-        localStorage.setItem("users", JSON.stringify(state.users)); // 💾 Save update
-      }
-    },
-
-    resetUsers(state) {
-      state.users = initialState.users;
-      localStorage.removeItem("users");
-    },
+      .addCase(fetchCurrentUser.rejected, (state, action) => {
+        state.currentUser = null;
+        state.error = action.payload;
+      });
   },
 });
 
-export const { login, logout, updateBalance, resetUsers } = userSlice.actions;
 export default userSlice.reducer;
