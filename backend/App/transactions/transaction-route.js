@@ -1,26 +1,24 @@
 import express from "express";
 import {
-  requestTransaction,
-  getMyTransactions,
+  createTransaction,
+  getUserTransactions,
   getAllTransactions,
-  approveTransaction,
+  processTransaction,
+  getTransactionById,
 } from "./transaction-controller.js";
+// import { authenticateToken } from "../common/middleware/authMiddleware.js";
+// import { isAdmin } from "../common/middleware/adminMiddleware.js";
 
-import authMiddleware from "../common/middleware/authMiddleware.js";
-import adminMiddleware from "../common/middleware/adminMiddleware.js";
+const router = express.Router();
 
-const transactionRouter = express.Router();
+router.post("/", createTransaction);
 
-// Request a new transaction (transfer, deposit, withdraw)
-transactionRouter.post("/", authMiddleware, requestTransaction);
+router.get("/user", getUserTransactions);
 
-// Get current user's transactions
-transactionRouter.get("/", authMiddleware, getMyTransactions);
+router.get("/admin", getAllTransactions);
 
-// Get all transactions (admin only)
-transactionRouter.get("/all", authMiddleware, adminMiddleware, getAllTransactions);
+router.put("/:transactionId/process", processTransaction);
 
-// Approve a transaction (admin only)
-transactionRouter.patch("/:id/approve", authMiddleware, adminMiddleware, approveTransaction);
+router.get("/:transactionId", getTransactionById);
 
-export default transactionRouter;
+export default router;

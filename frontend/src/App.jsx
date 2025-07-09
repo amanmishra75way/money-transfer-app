@@ -19,8 +19,15 @@ const App = () => {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    dispatch(fetchCurrentUser());
+    // Only fetch current user if tokens exist in localStorage
+    const storedUser = localStorage.getItem("user");
+    const accessToken = localStorage.getItem("accessToken");
+
+    if (storedUser && accessToken) {
+      dispatch(fetchCurrentUser());
+    }
   }, [dispatch]);
+
   return (
     <Suspense fallback={<Loader />}>
       {/* <ErrorMaker /> */}

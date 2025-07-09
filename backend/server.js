@@ -9,13 +9,24 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { dirname } from "path";
+import { rateLimit } from "express-rate-limit";
 
-// Support __dirname in ES modules
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const app = express();
 const port = process.env.PORT || 5000;
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 100,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  message: {
+    error: "Too many requests, please try again later.",
+  },
+});
+app.use(limiter);
 
 // Connect to MongoDB
 connectDB();
@@ -29,7 +40,6 @@ app.use(
   })
 );
 
-// Swagger setup
 const swaggerPath = path.join(__dirname, "docs", "swagger.json");
 const swaggerDocument = JSON.parse(fs.readFileSync(swaggerPath, "utf8"));
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
@@ -38,12 +48,10 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 app.use("/api/user", userRouter);
 app.use("/api/transactions", transactionRouter);
 
-// Default route
 app.get("/", (req, res) => {
   res.send("API is working");
 });
 
-// Start server
 app.listen(port, () => {
   console.log(`Listening on PORT: ${port}`);
   console.log(`Swagger docs available at http://localhost:${port}/api-docs`);

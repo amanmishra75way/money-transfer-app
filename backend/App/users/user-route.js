@@ -8,5 +8,6 @@ userRouter.post("/login", loginUser);
 userRouter.post("/refresh-token", refreshToken);
 userRouter.post("/logout", logoutUser);
 userRouter.get("/me", fetchCurrent);
+// userRouter.get("/all", fetchAll);
 
 export default userRouter;
